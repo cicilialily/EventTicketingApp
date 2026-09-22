@@ -109,6 +109,24 @@ const options = {
           },
         },
 
+        UpdateProfileRequest: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              minLength: 2,
+              maxLength: 100,
+              example: "Cicilia Lily",
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "cicilialily@example.com",
+            },
+          },
+          minProperties: 1,
+        },
+
         RegisterResponse: {
           type: "object",
           properties: {

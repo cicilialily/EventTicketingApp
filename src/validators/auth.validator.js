@@ -40,3 +40,18 @@ export const loginSchema = z.object({
     .min(1, "Password is required")
     .max(128, "Password is too long"),
 });
+export const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must not exceed 100 characters")
+    .optional(),
+
+  email: z
+    .string()
+    .trim()
+    .email("Please provide a valid email address")
+    .toLowerCase()
+    .optional(),
+});
