@@ -1,5 +1,9 @@
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import swaggerSpec from "./config/swagger.js";
 
 const app = express();
 
@@ -15,6 +19,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 export default app;
