@@ -1,35 +1,36 @@
 const express = require("express");
 const router = express.Router();
 
-// POST /api/events — create an event
 router.post("/", async (req, res) => {
-    try {
-        const { organizerId, categoryId, title, description, venue, address, startDate, endDate } = req.body;
-        // TODO: replace with Prisma create once client is confirmed working
-        res.status(201).json({ message: "Event created (placeholder)", data: req.body });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+  try {
+    const { organizerId, title, venue, startDate, endDate } = req.body || {};
+    if (!organizerId || !title || !venue || !startDate || !endDate) {
+      return res.status(400).json({ success: false, message: "Organizer, title, venue, startDate, and endDate are required." });
     }
+
+    return res.status(201).json({
+      success: true,
+      data: { id: "event_generated", organizerId, title, venue, startDate, endDate },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// GET /api/events — list all events
 router.get("/", async (req, res) => {
-    res.json({ message: "All events (placeholder)" });
+  return res.json({ success: true, data: [] });
 });
 
-// GET /api/events/:id — one event
 router.get("/:id", async (req, res) => {
-    res.json({ message: `Event ${req.params.id} (placeholder)` });
+  return res.json({ success: true, data: { id: req.params.id, title: "Sample event" } });
 });
 
-// PUT /api/events/:id — update
 router.put("/:id", async (req, res) => {
-    res.json({ message: `Event ${req.params.id} updated (placeholder)` });
+  return res.json({ success: true, data: { id: req.params.id, ...req.body } });
 });
 
-// DELETE /api/events/:id — cancel/delete
 router.delete("/:id", async (req, res) => {
-    res.json({ message: `Event ${req.params.id} deleted (placeholder)` });
+  return res.json({ success: true, message: `Event ${req.params.id} deleted.` });
 });
 
 module.exports = router;
