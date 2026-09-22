@@ -1,5 +1,6 @@
-import { registerSchema } from "../validators/auth.validator.js";
-import { registerUser } from "../services/auth.service.js";
+import { registerSchema, loginSchema } from "../validators/auth.validator.js";
+
+import { registerUser, loginUser } from "../services/auth.service.js";
 
 function formatValidationErrors(issues) {
   const errors = {};
@@ -51,6 +52,45 @@ export async function register(req, res) {
     return res.status(500).json({
       success: false,
       message: "Unable to create account",
+      data: null,
+    });
+  }
+}
+
+export async function login(req, res) {
+  const validation = loginSchema.safeParse(req.body);
+
+  if (!validation.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: formatValidationErrors(validation.error.issues),
+      data: null,
+    });
+  }
+
+  try {
+    const result = await loginUser(validation.data);
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: result,
+    });
+  } catch (error) {
+    if (error.code === "INVALID_CREDENTIALS") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+        data: null,
+      });
+    }
+
+    console.error("Login error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to login",
       data: null,
     });
   }
