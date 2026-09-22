@@ -16,4 +16,5 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.use("/api/events", require("./routes/events"));
 module.exports = app;
