@@ -1,9 +1,15 @@
 const express = require("express");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
 
 const app = express();
 
 // Middleware
 app.use(express.json());
+console.log("Swagger loaded:", !!swaggerSpec);
+
+// Swagger documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Health check route
 app.get("/api/health", (req, res) => {
@@ -17,4 +23,5 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/events", require("./routes/events"));
+
 module.exports = app;
