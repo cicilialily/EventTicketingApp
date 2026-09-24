@@ -1,6 +1,12 @@
 import { Router } from "express";
 
-import { register, login, logout } from "../controllers/auth.controller.js";
+import {
+  register,
+  login,
+  logout,
+  forgotPassword,
+  resetPassword,
+} from "../controllers/auth.controller.js";
 
 import { authenticate } from "../middleware/auth.middleware.js";
 
@@ -23,28 +29,12 @@ const router = Router();
  *     responses:
  *       201:
  *         description: Account created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/RegisterResponse"
  *       400:
  *         description: Validation failed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ValidationErrorResponse"
  *       409:
  *         description: An account with this email already exists
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
  *       500:
  *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
  */
 router.post("/register", register);
 
@@ -65,28 +55,12 @@ router.post("/register", register);
  *     responses:
  *       200:
  *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/LoginResponse"
  *       400:
  *         description: Validation failed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ValidationErrorResponse"
  *       401:
  *         description: Invalid email or password
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
  *       500:
  *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
  */
 router.post("/login", login);
 
@@ -96,31 +70,74 @@ router.post("/login", login);
  *   post:
  *     tags:
  *       - Authentication
- *     summary: Logout the authenticated user
- *     description: Revokes the current JWT access token so it can no longer be used.
+ *     summary: Logout authenticated user
+ *     description: Revokes the current JWT access token.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Logout successful
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/SuccessResponse"
  *       401:
- *         description: Authentication required or token is invalid/expired/revoked
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
+ *         description: Authentication required or token is invalid
  *       500:
  *         description: Server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
  */
 router.post("/logout", authenticate, logout);
+
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Request a password reset
+ *     description: Starts the password reset process without revealing whether the email exists.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: cicilia@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset request processed
+ *       400:
+ *         description: Validation failed
+ *       500:
+ *         description: Server error
+ */
+router.post("/forgot-password", forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Reset user password
+ *     description: Resets a user's password using a valid single-use reset token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/ResetPasswordRequest"
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid or expired token, or validation failure
+ *       500:
+ *         description: Server error
+ */
+router.post("/reset-password", resetPassword);
 
 /**
  * @swagger
@@ -129,46 +146,13 @@ router.post("/logout", authenticate, logout);
  *     tags:
  *       - Authentication
  *     summary: Get authenticated user information
- *     description: Returns the user ID and role contained in the authenticated JWT.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Authenticated user retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Authenticated user retrieved successfully
- *                 data:
- *                   type: object
- *                   properties:
- *                     user:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                           format: uuid
- *                           example: 05ae0ca2-da1c-4c3c-bd43-1f187d5f5443
- *                         role:
- *                           type: string
- *                           enum:
- *                             - USER
- *                             - ORGANIZER
- *                             - ADMIN
- *                           example: USER
  *       401:
- *         description: Authentication required or token is invalid/expired
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/ErrorResponse"
+ *         description: Authentication required or token is invalid or expired
  */
 router.get("/me", authenticate, (req, res) => {
   return res.status(200).json({
