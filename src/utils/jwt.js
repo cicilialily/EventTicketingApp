@@ -1,3 +1,5 @@
+import "dotenv/config";
+import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -10,6 +12,7 @@ if (!JWT_SECRET) {
 export function generateAccessToken(payload) {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
+    jwtid: crypto.randomUUID(),
   });
 }
 

@@ -2,6 +2,8 @@ import { registerSchema, loginSchema } from "../validators/auth.validator.js";
 
 import { registerUser, loginUser } from "../services/auth.service.js";
 
+import { revokeAccessToken } from "../services/token.service.js";
+
 function formatValidationErrors(issues) {
   const errors = {};
 
@@ -91,6 +93,33 @@ export async function login(req, res) {
     return res.status(500).json({
       success: false,
       message: "Unable to login",
+      data: null,
+    });
+  }
+}
+export async function logout(req, res) {
+  try {
+    await revokeAccessToken(req.user.jti, req.user.expiresAt);
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+      data: null,
+    });
+  } catch (error) {
+    if (error?.code === "P2002") {
+      return res.status(200).json({
+        success: true,
+        message: "Logout successful",
+        data: null,
+      });
+    }
+
+    console.error("Logout error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to logout",
       data: null,
     });
   }

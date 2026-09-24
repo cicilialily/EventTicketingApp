@@ -63,6 +63,24 @@ const options = {
           },
         },
 
+        SuccessResponse: {
+          type: "object",
+          properties: {
+            success: {
+              type: "boolean",
+              example: true,
+            },
+            message: {
+              type: "string",
+              example: "Logout successful",
+            },
+            data: {
+              nullable: true,
+              example: null,
+            },
+          },
+        },
+
         RegisterRequest: {
           type: "object",
           required: ["name", "email", "password", "confirmPassword"],

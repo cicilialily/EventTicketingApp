@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { register, login } from "../controllers/auth.controller.js";
+import { register, login, logout } from "../controllers/auth.controller.js";
 
 import { authenticate } from "../middleware/auth.middleware.js";
 
@@ -89,6 +89,38 @@ router.post("/register", register);
  *               $ref: "#/components/schemas/ErrorResponse"
  */
 router.post("/login", login);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Logout the authenticated user
+ *     description: Revokes the current JWT access token so it can no longer be used.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/SuccessResponse"
+ *       401:
+ *         description: Authentication required or token is invalid/expired/revoked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/ErrorResponse"
+ */
+router.post("/logout", authenticate, logout);
 
 /**
  * @swagger
