@@ -1,11 +1,15 @@
-const express = require("express");
+import express from "express";
+import swaggerUi from "swagger-ui-express";
+
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import swaggerSpec from "./config/swagger.js";
+import eventsRoutes from "./routes/events.js";
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 
-// Health check route
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -16,5 +20,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use("/api/events", require("./routes/events"));
-module.exports = app;
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/events", eventsRoutes);
+
+export default app;
