@@ -1,4 +1,5 @@
 import prisma from "../config/database.js";
+import { comparePassword, hashPassword } from "../utils/password.js";
 
 export async function getUserProfile(userId) {
   const user = await prisma.user.findUnique({
@@ -95,4 +96,61 @@ export async function updateUserProfile(userId, data) {
 
     throw error;
   }
+}
+
+export async function changeUserPassword(userId, currentPassword, newPassword) {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+      passwordHash: true,
+    },
+  });
+
+  if (!user) {
+    const error = new Error("User account not found.");
+    error.code = "USER_NOT_FOUND";
+    throw error;
+  }
+
+  const currentPasswordMatches = await comparePassword(
+    currentPassword,
+    user.passwordHash,
+  );
+
+  if (!currentPasswordMatches) {
+    const error = new Error("Current password is incorrect.");
+    error.code = "INVALID_CURRENT_PASSWORD";
+    throw error;
+  }
+
+  const newPasswordMatchesCurrent = await comparePassword(
+    newPassword,
+    user.passwordHash,
+  );
+
+  if (newPasswordMatchesCurrent) {
+    const error = new Error(
+      "New password must be different from the current password.",
+    );
+
+    error.code = "PASSWORD_UNCHANGED";
+    throw error;
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      passwordHash,
+      tokenVersion: {
+        increment: 1,
+      },
+    },
+  });
 }

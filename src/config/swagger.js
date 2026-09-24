@@ -63,6 +63,28 @@ const options = {
           },
         },
 
+        ChangePasswordRequest: {
+          type: "object",
+          required: ["currentPassword", "newPassword", "confirmPassword"],
+          properties: {
+            currentPassword: {
+              type: "string",
+              format: "password",
+              example: "Password123",
+            },
+            newPassword: {
+              type: "string",
+              format: "password",
+              minLength: 8,
+              example: "NewPassword456",
+            },
+            confirmPassword: {
+              type: "string",
+              format: "password",
+              example: "NewPassword456",
+            },
+          },
+        },
         SuccessResponse: {
           type: "object",
           properties: {

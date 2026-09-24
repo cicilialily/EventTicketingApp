@@ -5,6 +5,7 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import {
   getMyProfile,
   updateMyProfile,
+  changePassword,
 } from "../controllers/user.controller.js";
 
 const router = Router();
@@ -126,5 +127,35 @@ router.get("/me", authenticate, getMyProfile);
  *               $ref: "#/components/schemas/ErrorResponse"
  */
 router.put("/me", authenticate, updateMyProfile);
+
+/**
+ * @swagger
+ * /api/users/me/password:
+ *   put:
+ *     tags:
+ *       - Users
+ *     summary: Change current user's password
+ *     description: Changes the authenticated user's password after verifying the current password. Existing access tokens are invalidated.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/ChangePasswordRequest"
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Validation failed or new password is unchanged
+ *       401:
+ *         description: Authentication required or current password is incorrect
+ *       404:
+ *         description: User account not found
+ *       500:
+ *         description: Server error
+ */
+router.put("/me/password", authenticate, changePassword);
 
 export default router;
