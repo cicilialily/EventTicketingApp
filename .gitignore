@@ -20,6 +20,15 @@ yarn-error.log*
 pnpm-debug.log*
 
 .DS_Store
+<<<<<<< HEAD
 Thumbs.db
 
 .vscode/
+=======
+/src/generated/prisma
+
+# AI coding tool files
+.claude/
+.cursor/
+.windsurf/
+>>>>>>> 09c80a4 (Remove unnecessary AI tool files)
