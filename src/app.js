@@ -1,5 +1,10 @@
-const express = require("express");
-const { errorHandler } = require("./middleware/errorHandler");
+import express from "express";
+import swaggerUi from "swagger-ui-express";
+
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import swaggerSpec from "./config/swagger.js";
+import eventsRoutes from "./routes/events.js";
 
 const app = express();
 
@@ -9,16 +14,16 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     message: "EventTicketing API is running",
-    data: { status: "OK" },
+    data: {
+      status: "OK",
+    },
   });
 });
 
-app.use("/api/events", require("./routes/events"));
-app.use("/api/orders", require("./routes/orders"));
-app.use("/api/ticket-types", require("./routes/ticketTypes"));
-app.use("/api/tickets", require("./routes/tickets"));
-app.use("/api/users", require("./routes/users"));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use(errorHandler);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/events", eventsRoutes);
 
-module.exports = app;
+export default app;
