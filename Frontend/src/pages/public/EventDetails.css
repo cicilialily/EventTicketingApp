@@ -1,0 +1,415 @@
+/* =========================
+   EVENT DETAILS PAGE
+========================= */
+
+.event-details-page {
+  min-height: calc(100vh - 72px);
+  padding: 45px 0 80px;
+  background: #f7f7fb;
+}
+
+/* =========================
+   BACK LINK
+========================= */
+
+.event-details-back {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
+
+  color: #686575;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  transition: color 0.2s ease;
+}
+
+.event-details-back:hover {
+  color: #5b3df5;
+}
+
+/* =========================
+   HERO
+========================= */
+
+.event-details-hero {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 16px 45px rgba(26, 18, 71, 0.08);
+}
+
+.event-details-image-wrapper {
+  width: 100%;
+  height: 480px;
+  overflow: hidden;
+}
+
+.event-details-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  object-fit: cover;
+
+  transition: transform 0.4s ease;
+}
+
+.event-details-image-wrapper:hover .event-details-image {
+  transform: scale(1.02);
+}
+
+.event-details-image-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  place-items: center;
+
+  background: linear-gradient(135deg, #eeeaff, #e4dfff);
+  color: #5b3df5;
+
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.event-details-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+
+  margin-top: 28px;
+}
+
+.event-details-main {
+  padding: 38px;
+
+  background: #ffffff;
+  border: 1px solid #ebe9f1;
+  border-radius: 22px;
+  box-shadow: 0 12px 35px rgba(26, 18, 71, 0.05);
+}
+
+.event-details-eyebrow,
+.event-ticket-eyebrow {
+  margin: 0 0 10px;
+
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #5b3df5;
+}
+
+.event-details-category {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  background: #eeeaff;
+  color: #5b3df5;
+
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
+.event-details-main h1 {
+  margin: 18px 0 0;
+
+  color: #171526;
+
+  font-size: clamp(2.2rem, 4vw, 3.3rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.event-details-description {
+  margin: 22px 0 0;
+
+  max-width: 760px;
+
+  color: #666374;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+/* =========================
+   EVENT INFORMATION
+========================= */
+
+.event-details-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+
+  margin-top: 32px;
+}
+
+.event-details-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 17px;
+
+  border: 1px solid #ebe9f1;
+  border-radius: 14px;
+
+  background: #fbfaff;
+}
+
+.event-details-info-icon {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+  background: #eeeaff;
+
+  font-size: 1rem;
+}
+
+.event-details-info > div {
+  min-width: 0;
+}
+
+.event-details-info-label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #898694;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.event-details-info strong {
+  display: block;
+
+  color: #2b2938;
+
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* =========================
+   TICKET CARD
+========================= */
+
+.event-ticket-card {
+  align-self: start;
+
+  padding: 30px;
+
+  background: #ffffff;
+  border: 1px solid #ebe9f1;
+  border-radius: 22px;
+
+  box-shadow: 0 12px 35px rgba(26, 18, 71, 0.07);
+}
+
+.event-ticket-card h2 {
+  margin: 0;
+
+  color: #171526;
+
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+}
+
+.event-ticket-description {
+  margin: 11px 0 0;
+
+  color: #777382;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.event-ticket-price {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  margin-top: 25px;
+  padding-top: 20px;
+
+  border-top: 1px solid #eceaf2;
+}
+
+.event-ticket-price span {
+  color: #898694;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.event-ticket-price strong {
+  color: #171526;
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+}
+
+.event-ticket-button {
+  width: 100%;
+  min-height: 50px;
+
+  margin-top: 22px;
+
+  border: none;
+  border-radius: 11px;
+
+  background: #eeeaff;
+  color: #5b3df5;
+
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+
+  cursor: not-allowed;
+}
+
+.event-ticket-note {
+  margin: 13px 0 0;
+
+  color: #92909b;
+
+  font-size: 0.73rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* =========================
+   NOT FOUND
+========================= */
+
+.event-not-found {
+  max-width: 650px;
+
+  margin: 80px auto;
+  padding: 50px 35px;
+
+  text-align: center;
+
+  background: #ffffff;
+  border: 1px solid #ebe9f1;
+  border-radius: 22px;
+
+  box-shadow: 0 14px 40px rgba(26, 18, 71, 0.06);
+}
+
+.event-not-found h1 {
+  margin: 0;
+
+  color: #171526;
+
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.event-not-found > p:not(.event-details-eyebrow) {
+  margin: 12px 0 25px;
+
+  color: #777382;
+  line-height: 1.6;
+}
+
+.event-details-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 46px;
+  padding: 0 19px;
+
+  border-radius: 10px;
+
+  background: #5b3df5;
+  color: #ffffff;
+
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+
+  box-shadow: 0 10px 20px rgba(91, 61, 245, 0.17);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.event-details-back-button:hover {
+  background: #4528d3;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .event-details-page {
+    padding: 35px 0 60px;
+  }
+
+  .event-details-image-wrapper {
+    height: 380px;
+  }
+
+  .event-details-content {
+    grid-template-columns: 1fr;
+  }
+
+  .event-ticket-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .event-details-page {
+    padding: 25px 0 50px;
+  }
+
+  .event-details-hero {
+    border-radius: 16px;
+  }
+
+  .event-details-image-wrapper {
+    height: 260px;
+  }
+
+  .event-details-main {
+    padding: 25px 20px;
+    border-radius: 16px;
+  }
+
+  .event-details-main h1 {
+    font-size: 2rem;
+  }
+
+  .event-details-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-ticket-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .event-not-found {
+    margin: 50px auto;
+    padding: 40px 22px;
+  }
+}
