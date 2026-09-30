@@ -16,6 +16,10 @@ async function apiRequest(endpoint, options = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+
+    // Prevent browser caching from turning API responses into
+    // 304 responses with no JSON body.
+    cache: "no-store",
   });
 
   let payload = null;
