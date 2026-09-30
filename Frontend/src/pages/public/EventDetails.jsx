@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { getEventById } from "../../services/eventService";
+
 import TicketSelection from "../../components/tickets/TicketSelection";
+import OrderSummary from "../../components/tickets/OrderSummary";
 
 import "./EventDetails.css";
 
@@ -12,7 +14,9 @@ function EventDetails() {
   const [event, setEvent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [selectionMessage, setSelectionMessage] = useState("");
+
+  const [selectedTickets, setSelectedTickets] = useState(null);
+  const [checkoutMessage, setCheckoutMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -52,10 +56,18 @@ function EventDetails() {
   }, [id]);
 
   function handleTicketContinue(selection) {
-    console.log("Selected tickets:", selection);
+    setSelectedTickets(selection);
+    setCheckoutMessage("");
+  }
 
-    setSelectionMessage(
-      "Your ticket selection has been saved. Checkout will be connected when the Orders API is ready.",
+  function handleBackToSelection() {
+    setSelectedTickets(null);
+    setCheckoutMessage("");
+  }
+
+  function handleCheckout() {
+    setCheckoutMessage(
+      "Checkout will be connected when the Orders and Tickets API is ready.",
     );
   }
 
@@ -130,12 +142,10 @@ function EventDetails() {
   return (
     <main className="event-details-page">
       <div className="container">
-        {/* Back link */}
         <Link to="/events" className="event-details-back">
           ← Back to events
         </Link>
 
-        {/* Hero image */}
         <section className="event-details-hero">
           <div className="event-details-image-wrapper">
             {image ? (
@@ -152,7 +162,6 @@ function EventDetails() {
           </div>
         </section>
 
-        {/* Event content */}
         <section className="event-details-content">
           <div className="event-details-main">
             <span className="event-details-category">{category}</span>
@@ -200,15 +209,24 @@ function EventDetails() {
           </div>
         </section>
 
-        {/* Ticket selection */}
+        {/* Ticket purchasing flow */}
         <section className="event-ticket-section">
-          <TicketSelection
-            ticketTypes={ticketTypes}
-            onContinue={handleTicketContinue}
-          />
+          {!selectedTickets ? (
+            <TicketSelection
+              ticketTypes={ticketTypes}
+              onContinue={handleTicketContinue}
+            />
+          ) : (
+            <OrderSummary
+              event={event}
+              selection={selectedTickets}
+              onBack={handleBackToSelection}
+              onContinue={handleCheckout}
+            />
+          )}
 
-          {selectionMessage && (
-            <p className="event-ticket-selection-message">{selectionMessage}</p>
+          {checkoutMessage && (
+            <p className="event-ticket-selection-message">{checkoutMessage}</p>
           )}
         </section>
       </div>

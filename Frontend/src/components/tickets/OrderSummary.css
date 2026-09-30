@@ -1,0 +1,270 @@
+.order-summary {
+  width: 100%;
+  padding: 32px;
+  border: 1px solid #e9e6f2;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 14px 40px rgba(31, 27, 54, 0.06);
+}
+
+.order-summary-header {
+  margin-bottom: 24px;
+}
+
+.order-summary-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6b4eff;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.order-summary-back:hover {
+  color: #5237d8;
+}
+
+.order-summary-heading {
+  border-bottom: 1px solid #eeeaf5;
+  padding-bottom: 22px;
+}
+
+.order-summary-eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #6b4eff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.order-summary-heading h2 {
+  margin: 0;
+  color: #171526;
+  font-size: 1.65rem;
+  line-height: 1.2;
+}
+
+.order-summary-heading p {
+  margin: 8px 0 0;
+  color: #716d82;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.order-summary-event {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #ebe8f3;
+  border-radius: 16px;
+  background: #fbfaff;
+}
+
+.order-summary-event-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #eeeaff;
+  color: #6b4eff;
+}
+
+.order-summary-event span,
+.order-summary-ticket-info span,
+.order-summary-ticket-price span,
+.order-summary-total span {
+  display: block;
+  color: #7b7587;
+  font-size: 0.78rem;
+}
+
+.order-summary-event strong {
+  display: block;
+  margin-top: 3px;
+  color: #211d32;
+  font-size: 0.96rem;
+}
+
+.order-summary-ticket-list {
+  display: grid;
+  gap: 12px;
+}
+
+.order-summary-ticket {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid #f0edf6;
+}
+
+.order-summary-ticket:last-child {
+  border-bottom: 0;
+}
+
+.order-summary-ticket-info strong {
+  display: block;
+  color: #211d32;
+  font-size: 0.96rem;
+}
+
+.order-summary-ticket-info span {
+  margin-top: 5px;
+}
+
+.order-summary-ticket-price {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.order-summary-ticket-price strong {
+  display: block;
+  margin-top: 5px;
+  color: #211d32;
+  font-size: 0.96rem;
+}
+
+.order-summary-total {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 20px 0;
+  border-top: 1px solid #e9e5f1;
+  border-bottom: 1px solid #e9e5f1;
+}
+
+.order-summary-total > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.order-summary-total strong {
+  color: #211d32;
+  font-size: 0.95rem;
+}
+
+.order-summary-total > div:last-child {
+  margin-top: 2px;
+}
+
+.order-summary-total > div:last-child span {
+  color: #494257;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.order-summary-total > div:last-child strong {
+  color: #171526;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.order-summary-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f7f5ff;
+  color: #6b4eff;
+}
+
+.order-summary-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.order-summary-notice strong {
+  display: block;
+  color: #2b2540;
+  font-size: 0.86rem;
+}
+
+.order-summary-notice p {
+  margin: 5px 0 0;
+  color: #756f82;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.order-summary-continue {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 22px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #6b4eff;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.order-summary-continue:hover {
+  background: #593ee7;
+  box-shadow: 0 10px 24px rgba(107, 78, 255, 0.2);
+}
+
+.order-summary-continue:active {
+  transform: scale(0.99);
+}
+
+.order-summary-footnote {
+  margin: 12px 0 0;
+  color: #8a8495;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .order-summary {
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .order-summary-heading h2 {
+    font-size: 1.4rem;
+  }
+
+  .order-summary-ticket {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 440px) {
+  .order-summary {
+    padding: 18px;
+  }
+
+  .order-summary-ticket {
+    flex-direction: column;
+  }
+
+  .order-summary-ticket-price {
+    text-align: left;
+  }
+
+  .order-summary-ticket-price strong {
+    margin-top: 3px;
+  }
+}
