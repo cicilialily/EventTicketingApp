@@ -1,77 +1,40 @@
-const {
-  calculateOrderTotal,
-  createOrderForUser,
-  createOrderTransaction,
-  markOrderPaid,
-  getTicketTypeAvailability,
-  markOrderPaidTransaction,
-} = require('../services/orderService');
-const { validatePurchase } = require('../services/ticketService');
+import * as orderService from '../services/order.service.js';
 
-async function createOrder(req, res) {
-  const { items = [] } = req.body || {};
-  const idempotencyKey = req.headers['idempotency-key'];
+export async function createOrder(req, res, next) {
+  try {
+    const { eventId, items } = req.body;
+    const userId = req.user.id; // Injected by your Auth Middleware
 
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ success: false, message: 'At least one ticket item is required.' });
-  }
-
-  const maxPerOrder = Number(process.env.MAX_TICKETS_PER_ORDER || 8);
-  const ticketTypes = items.reduce((map, item) => {
-    const quantity = Number(item.quantity || 0);
-    const ticketType = {
-      id: item.ticketTypeId,
-      price: 35.5,
-      totalQuantity: 100,
-      quantitySold: 0,
-      salesStart: new Date(Date.now() - 1000 * 60 * 60),
-      salesEnd: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
-      isActive: true,
-    };
-
-    if (!validatePurchase(ticketType, quantity, maxPerOrder)) {
-      throw Object.assign(new Error('Requested quantity exceeds availability or order limit.'), { statusCode: 409 });
+    if (!eventId || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event ID and at least one ticket item are required.',
+      });
     }
 
-    map[item.ticketTypeId] = ticketType;
-    return map;
-  }, {});
+    const order = await orderService.createOrderTransaction({ userId, eventId, items });
 
-  const totalAmount = calculateOrderTotal(items, ticketTypes);
-  const order = createOrderForUser({
-    userId: req.user.id,
-    idempotencyKey: idempotencyKey || `order_${Date.now()}`,
-    items,
-    ticketTypes,
-  });
-
-  const transactionResult = await createOrderTransaction({
-    userId: req.user.id,
-    idempotencyKey: idempotencyKey || `order_${Date.now()}`,
-    items,
-    ticketTypes: Object.values(ticketTypes),
-  });
-
-  return res.status(201).json({
-    success: true,
-    data: {
-      ...order,
-      ...transactionResult,
-      totalAmount,
-      status: 'PENDING',
-      availability: Object.fromEntries(Object.entries(ticketTypes).map(([id, type]) => [id, getTicketTypeAvailability(type)])),
-    },
-  });
+    return res.status(201).json({
+      success: true,
+      message: 'Order created successfully',
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
-async function payOrder(req, res) {
-  const transactionResult = await markOrderPaidTransaction(req.params.id);
-  const paidOrder = markOrderPaid(
-    transactionResult,
-    { tickets: transactionResult.tickets || [], orderId: req.params.id }
-  );
+export async function payOrder(req, res, next) {
+  try {
+    const { id } = req.params;
+    const paidOrder = await orderService.markOrderPaidTransaction(id);
 
-  return res.status(200).json({ success: true, data: paidOrder });
+    return res.status(200).json({
+      success: true,
+      message: 'Order payment successful',
+      data: paidOrder,
+    });
+  } catch (error) {
+    next(error);
+  }
 }
-
-module.exports = { createOrder, payOrder };

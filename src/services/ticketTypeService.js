@@ -1,12 +1,4 @@
-const prisma = require('../lib/prisma');
-
-function requirePrisma() {
-  if (!prisma) {
-    const error = new Error('Database is not configured.');
-    error.statusCode = 503;
-    throw error;
-  }
-}
+import prisma from '../lib/prisma.js';
 
 function toTicketTypeData(input) {
   const data = {
@@ -14,25 +6,28 @@ function toTicketTypeData(input) {
     name: input.name,
     description: input.description,
     price: input.price,
-    totalQuantity: input.totalQuantity,
-    salesStart: input.salesStart ? new Date(input.salesStart) : null,
-    salesEnd: input.salesEnd ? new Date(input.salesEnd) : null,
-    isActive: input.isActive === undefined ? true : Boolean(input.isActive),
+    quantity: Number(input.quantity ?? input.totalQuantity),
+    saleStart: (input.saleStart || input.salesStart) 
+      ? new Date(input.saleStart || input.salesStart) 
+      : null,
+    saleEnd: (input.saleEnd || input.salesEnd) 
+      ? new Date(input.saleEnd || input.salesEnd) 
+      : null,
   };
 
-  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+  return Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== undefined)
+  );
 }
 
-async function listTicketTypes(eventId) {
-  requirePrisma();
+export async function listTicketTypes(eventId) {
   return prisma.ticketType.findMany({
     where: eventId ? { eventId } : undefined,
     orderBy: { createdAt: 'desc' },
   });
 }
 
-async function createTicketType(input, organizerId) {
-  requirePrisma();
+export async function createTicketType(input, organizerId) {
   const event = await prisma.event.findFirst({ where: { id: input.eventId, organizerId } });
   if (!event) {
     const error = new Error('Event not found or organizer access denied.');
@@ -43,8 +38,7 @@ async function createTicketType(input, organizerId) {
   return prisma.ticketType.create({ data: toTicketTypeData(input) });
 }
 
-async function updateTicketType(id, input, organizerId) {
-  requirePrisma();
+export async function updateTicketType(id, input, organizerId) {
   const ticketType = await prisma.ticketType.findFirst({ where: { id, event: { organizerId } } });
   if (!ticketType) {
     const error = new Error('Ticket type not found or organizer access denied.');
@@ -55,8 +49,7 @@ async function updateTicketType(id, input, organizerId) {
   return prisma.ticketType.update({ where: { id }, data: toTicketTypeData(input) });
 }
 
-async function deleteTicketType(id, organizerId) {
-  requirePrisma();
+export async function deleteTicketType(id, organizerId) {
   const ticketType = await prisma.ticketType.findFirst({ where: { id, event: { organizerId } } });
   if (!ticketType) {
     const error = new Error('Ticket type not found or organizer access denied.');
@@ -64,12 +57,9 @@ async function deleteTicketType(id, organizerId) {
     throw error;
   }
 
-  return prisma.ticketType.update({ where: { id }, data: { isActive: false } });
+  return prisma.ticketType.delete({ where: { id } });
 }
 
-async function getTicketType(id) {
-  requirePrisma();
+export async function getTicketType(id) {
   return prisma.ticketType.findUnique({ where: { id } });
 }
-
-module.exports = { listTicketTypes, createTicketType, updateTicketType, deleteTicketType, getTicketType };

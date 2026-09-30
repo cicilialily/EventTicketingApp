@@ -2,8 +2,18 @@ import prisma from "../config/database.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateAccessToken } from "../utils/jwt.js";
 
-export async function registerUser({ name, email, password }) {
+const VALID_ROLES = ["USER", "ORGANIZER", "ADMIN"];
+
+export async function registerUser({ name, email, password, role }) {
   const normalizedEmail = email.trim().toLowerCase();
+
+  let assignedRole = "USER";
+  if (role) {
+    const uppercaseRole = role.trim().toUpperCase();
+    if (VALID_ROLES.includes(uppercaseRole)) {
+      assignedRole = uppercaseRole;
+    }
+  }
 
   const existingUser = await prisma.user.findUnique({
     where: {
@@ -25,7 +35,7 @@ export async function registerUser({ name, email, password }) {
         name: name.trim(),
         email: normalizedEmail,
         passwordHash,
-        role: "USER",
+        role: assignedRole,
       },
       select: {
         id: true,
@@ -41,7 +51,7 @@ export async function registerUser({ name, email, password }) {
   } catch (error) {
     if (error?.code === "P2002") {
       const duplicateError = new Error(
-        "An account with this email already exists.",
+        "An account with this email already exists."
       );
 
       duplicateError.code = "EMAIL_EXISTS";

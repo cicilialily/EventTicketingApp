@@ -1,9 +1,10 @@
-const express = require('express');
-const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
-const { createOrder, payOrder } = require('../controllers/orderController');
+import { Router } from 'express';
+import { createOrder, payOrder } from '../controllers/orderController.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
-router.post('/', requireAuth, createOrder);
-router.post('/:id/pay', requireAuth, payOrder);
+const router = Router();
 
-module.exports = router;
+router.post('/', authenticate, createOrder);
+router.post('/:id/pay', authenticate, payOrder);
+
+export default router;

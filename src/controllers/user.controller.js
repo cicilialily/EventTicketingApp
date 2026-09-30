@@ -1,4 +1,5 @@
 import { changePasswordSchema } from "../validators/auth.validator.js";
+import { getPurchaseHistory } from "../services/purchaseHistoryService.js";
 
 import {
   getUserProfile,
@@ -154,6 +155,28 @@ export async function changePassword(req, res) {
       success: false,
       message: "Unable to change password",
       data: null,
+    });
+  }
+}
+export async function getUserPurchaseHistory(req, res) {
+  try {
+    if (req.user.id !== req.params.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only view your own purchase history.",
+      });
+    }
+
+    const data = await getPurchaseHistory(req.params.id, req.query);
+    return res.status(200).json({
+      success: true,
+      data: { userId: req.params.id, ...data },
+    });
+  } catch (error) {
+    console.error("Purchase history error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to retrieve purchase history.",
     });
   }
 }

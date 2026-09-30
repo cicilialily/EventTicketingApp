@@ -1,9 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const { requireAuth, requireOrganizerOrStaff } = require('../middleware/auth');
-const { getTicketQr, checkInTicketController } = require('../controllers/ticketController');
+import { Router } from 'express';
+// 1. Import the actual exported functions from ../middleware/auth.js
+import { requireAuth, requireOrganizerOrAdmin } from '../middleware/auth.js';
+import { getTicketQr, checkInTicketController } from '../controllers/ticketController.js';
 
+const router = Router();
+
+// 2. Use requireAuth instead of authenticate
 router.get('/:id/qr', requireAuth, getTicketQr);
-router.post('/:id/check-in', requireAuth, requireOrganizerOrStaff, checkInTicketController);
 
-module.exports = router;
+// 3. Use requireOrganizerOrStaff instead of authorizeRoles('ORGANIZER', 'ADMIN')
+router.post('/check-in', requireAuth, requireOrganizerOrAdmin, checkInTicketController);
+
+export default router;

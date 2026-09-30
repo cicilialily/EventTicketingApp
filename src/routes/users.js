@@ -1,8 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
-const { getUserPurchaseHistory } = require('../controllers/userController');
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import { getUserPurchaseHistory } from '../controllers/user.controller.js';
+
+const router = Router();
 
 router.get('/:id/orders', requireAuth, getUserPurchaseHistory);
 
-module.exports = router;
+export default router;

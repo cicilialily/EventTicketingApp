@@ -1,6 +1,6 @@
-const prisma = require('../lib/prisma');
+import prisma from '../lib/prisma.js';
 
-async function getPurchaseHistory(userId, { page = 1, pageSize = 20 } = {}) {
+export async function getPurchaseHistory(userId, { page = 1, pageSize = 20 } = {}) {
   if (!prisma) {
     const error = new Error('Database is not configured.');
     error.statusCode = 503;
@@ -10,10 +10,19 @@ async function getPurchaseHistory(userId, { page = 1, pageSize = 20 } = {}) {
   const safePage = Math.max(Number(page) || 1, 1);
   const safePageSize = Math.min(Math.max(Number(pageSize) || 20, 1), 100);
   const where = { userId };
+
   const [orders, total] = await prisma.$transaction([
     prisma.order.findMany({
       where,
-      include: { items: { include: { ticketType: true, tickets: true } } },
+      include: {
+        event: true, // Includes associated event details (title, dates, location, etc.)
+        items: {
+          include: {
+            ticketType: true,
+            tickets: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       skip: (safePage - 1) * safePageSize,
       take: safePageSize,
@@ -21,7 +30,11 @@ async function getPurchaseHistory(userId, { page = 1, pageSize = 20 } = {}) {
     prisma.order.count({ where }),
   ]);
 
-  return { orders, page: safePage, pageSize: safePageSize, total };
+  return {
+    orders,
+    page: safePage,
+    pageSize: safePageSize,
+    total,
+    totalPages: Math.ceil(total / safePageSize),
+  };
 }
-
-module.exports = { getPurchaseHistory };

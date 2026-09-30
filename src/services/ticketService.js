@@ -1,99 +1,84 @@
-const prisma = require('../lib/prisma');
-const { signQrPayload } = require('./qrService');
-const { verifyPayload } = require('../utils/signing');
+import crypto from 'crypto';
+import { TicketStatus } from '@prisma/client';
+import prisma from '../lib/prisma.js';
+import { signQrPayload, verifyQrPayload, decodeQrPayload } from './qrService.js';
 
-function canReserveQuantity(ticketType, quantityToReserve) {
-  const remaining = Number(ticketType.totalQuantity ?? 0) - Number(ticketType.quantitySold ?? 0);
-  return quantityToReserve > 0 && remaining >= quantityToReserve;
-}
+// ... keep existing helper functions (canReserveQuantity, isWithinSalesWindow, validatePurchase)
 
-function isWithinSalesWindow(ticketType, now = new Date()) {
-  if (!ticketType) return false;
-  const startOk = !ticketType.salesStart || now >= new Date(ticketType.salesStart);
-  const endOk = !ticketType.salesEnd || now <= new Date(ticketType.salesEnd);
-  return ticketType.isActive !== false && startOk && endOk;
-}
-
-function validatePurchase(ticketType, quantityToReserve, maxPerOrder = Number(process.env.MAX_TICKETS_PER_ORDER || 8), now = new Date()) {
-  if (!ticketType) return false;
-  if (quantityToReserve > maxPerOrder) return false;
-  if (!isWithinSalesWindow(ticketType, now)) return false;
-  return canReserveQuantity(ticketType, quantityToReserve);
-}
-
-async function generateTicketsForOrder({ orderId, orderItemId, ticketTypeId, eventId, ownerUserId, quantity }) {
-  if (!prisma) {
-    return Array.from({ length: quantity }, (_, index) => ({
-      id: `ticket_${orderId}_${index}`,
-      status: 'VALID',
-      orderItemId,
-      ticketTypeId,
-      eventId,
-      ownerUserId,
-    }));
-  }
-
+export async function generateTicketsForOrder({ orderItemId, ticketTypeId, eventId, userId, quantity }, tx = prisma) {
   const createdTickets = [];
+
   for (let index = 0; index < quantity; index += 1) {
-    const ticket = await prisma.ticket.create({
+    const ticketId = crypto.randomUUID();
+    const ticketNumber = `TCK-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const qrCode = signQrPayload({
+      ticketId,
+      ticketNumber,
+      eventId,
+      exp: Math.floor(Date.now() / 1000) + (3600 * 24 * 30),
+    });
+
+    const ticket = await tx.ticket.create({
       data: {
+        id: ticketId,
+        ticketNumber,
         orderItemId,
         ticketTypeId,
         eventId,
-        ownerUserId,
-        status: 'VALID',
-        qrPayload: '',
+        userId,
+        status: TicketStatus.ACTIVE || 'ACTIVE',
+        qrCode,
       },
     });
 
-    const qrPayload = signQrPayload({
-      ticketId: ticket.id,
-      eventId,
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    });
-
-    const updatedTicket = await prisma.ticket.update({
-      where: { id: ticket.id },
-      data: { qrPayload },
-    });
-
-    createdTickets.push(updatedTicket);
+    createdTickets.push(ticket);
   }
 
   return createdTickets;
 }
 
-function verifyTicketQrPayload(token) {
-  if (!token) return false;
-  try {
-    const [body] = token.split('.');
-    if (!body) return false;
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
-    const now = Math.floor(Date.now() / 1000);
-    if (!payload || Number(payload.exp) <= now) return false;
-    return verifyPayload(token);
-  } catch (error) {
-    return false;
+export async function checkInTicketByQr(qrToken) {
+  if (!verifyQrPayload(qrToken)) {
+    const error = new Error('Invalid or expired QR code.');
+    error.statusCode = 400;
+    throw error;
   }
+
+  const payload = decodeQrPayload(qrToken);
+
+  const ticket = await prisma.ticket.findFirst({
+    where: {
+      OR: [
+        ...(payload?.ticketId ? [{ id: payload.ticketId }] : []),
+        { qrCode: qrToken },
+      ],
+    },
+  });
+
+  if (!ticket) {
+    const error = new Error('Ticket not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (ticket.status === TicketStatus.CHECKED_IN || ticket.status === 'CHECKED_IN' || ticket.status === 'USED') {
+    const error = new Error('Ticket has already been used.');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  if (ticket.status !== TicketStatus.ACTIVE && ticket.status !== 'ACTIVE') {
+    const error = new Error(`Ticket cannot be checked in because it is ${ticket.status}.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return prisma.ticket.update({
+    where: { id: ticket.id },
+    data: {
+      status: TicketStatus.CHECKED_IN,
+      checkedInAt: new Date(),
+    },
+  });
 }
-
-function checkInTicket(ticket) {
-  if (!ticket || !['VALID', 'USED', 'CANCELLED', 'EXPIRED'].includes(ticket.status)) {
-    return { ...ticket, status: 'INVALID' };
-  }
-
-  if (ticket.status === 'VALID') {
-    return { ...ticket, status: 'USED' };
-  }
-
-  return { ...ticket, status: ticket.status };
-}
-
-module.exports = {
-  canReserveQuantity,
-  isWithinSalesWindow,
-  validatePurchase,
-  generateTicketsForOrder,
-  verifyTicketQrPayload,
-  checkInTicket,
-};

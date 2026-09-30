@@ -1,33 +1,44 @@
-const { signQrPayload, generateQrPng, verifyQrPayload } = require('../services/qrService');
-const { verifyTicketQrPayload, checkInTicket } = require('../services/ticketService');
+import * as ticketService from '../services/ticketService.js';
+import * as qrService from '../services/qrService.js';
+import prisma from '../lib/prisma.js';
 
-async function getTicketQr(req, res) {
-  const token = signQrPayload({
-    ticketId: req.params.id,
-    eventId: 'event_generated',
-    exp: Math.floor(Date.now() / 1000) + 3600,
-  });
+export async function getTicketQr(req, res, next) {
+  try {
+    const { id } = req.params;
 
-  const imageBuffer = await generateQrPng(token);
-  res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Content-Disposition', `inline; filename="ticket-${req.params.id}.png"`);
-  return res.status(200).send(imageBuffer);
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+    });
+
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket not found.' });
+    }
+
+    const imageBuffer = await qrService.generateQrPng(ticket.qrCode);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `inline; filename="ticket-${ticket.ticketNumber}.png"`);
+    return res.status(200).send(imageBuffer);
+  } catch (error) {
+    next(error);
+  }
 }
 
-async function checkInTicketController(req, res) {
-  const token = req.body.qrPayload || req.body.qrToken;
+export async function checkInTicketController(req, res, next) {
+  try {
+    const { qrCode } = req.body;
 
-  if (!verifyTicketQrPayload(token) && !verifyQrPayload(token)) {
-    return res.status(400).json({ success: false, message: 'Invalid or expired QR signature.' });
+    if (!qrCode) {
+      return res.status(400).json({ success: false, message: 'QR token payload is required.' });
+    }
+
+    const checkedInTicket = await ticketService.checkInTicketByQr(qrCode);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Attendee successfully checked in.',
+      data: checkedInTicket,
+    });
+  } catch (error) {
+    next(error);
   }
-
-  const ticket = checkInTicket({ id: req.params.id, status: 'VALID' });
-
-  if (ticket.status === 'USED') {
-    return res.status(200).json({ success: true, data: ticket });
-  }
-
-  return res.status(409).json({ success: false, message: 'Ticket is already used, cancelled, or expired.' });
 }
-
-module.exports = { getTicketQr, checkInTicketController };

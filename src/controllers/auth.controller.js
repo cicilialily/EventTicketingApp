@@ -6,9 +6,7 @@ import {
 } from "../validators/auth.validator.js";
 
 import { registerUser, loginUser } from "../services/auth.service.js";
-
 import { revokeAccessToken } from "../services/token.service.js";
-
 import {
   createPasswordResetToken,
   resetUserPassword,

@@ -1,19 +1,29 @@
-let prisma;
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-try {
+const globalForPrisma = globalThis;
+
+function createPrismaClient() {
   if (!process.env.DATABASE_URL) {
-    module.exports = null;
-    return;
+    console.warn('DATABASE_URL is missing from environment variables.');
+    return null;
   }
 
-  const { PrismaClient } = require('@prisma/client');
-  const { PrismaPg } = require('@prisma/adapter-pg');
-  const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL,
-  });
-  prisma = new PrismaClient({ adapter });
-} catch (error) {
-  prisma = null;
+  try {
+    const adapter = new PrismaPg({
+      connectionString: process.env.DATABASE_URL,
+    });
+    return new PrismaClient({ adapter });
+  } catch (error) {
+    console.error('Failed to initialize Prisma Client:', error);
+    return null;
+  }
 }
 
-module.exports = prisma;
+export const prisma = globalForPrisma.prisma || createPrismaClient();
+
+if (process.env.NODE_ENV !== 'production' && prisma) {
+  globalForPrisma.prisma = prisma;
+}
+
+export default prisma;

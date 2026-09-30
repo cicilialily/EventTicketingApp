@@ -76,6 +76,7 @@ export async function authenticate(req, res, next) {
       });
     }
 
+    // Attaches the logged-in user details to the request
     req.user = {
       id: user.id,
       role: user.role,
@@ -91,4 +92,18 @@ export async function authenticate(req, res, next) {
       data: null,
     });
   }
+}
+
+// Optional helper to enforce ORGANIZER or ADMIN access on protected endpoints
+export function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Insufficient permissions",
+        data: null,
+      });
+    }
+    next();
+  };
 }
