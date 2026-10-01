@@ -1,4 +1,7 @@
 import { ArrowLeft, ShieldCheck, Ticket } from "lucide-react";
+import { useState } from "react";
+
+import { createOrder } from "../../services/orderService";
 
 import "./OrderSummary.css";
 
@@ -12,16 +15,61 @@ function formatCurrency(value) {
   return `₦${amount.toLocaleString("en-NG")}`;
 }
 
-function OrderSummary({ event, selection, onBack, onContinue }) {
+function OrderSummary({ event, selection, onBack, onOrderCreated }) {
   const tickets = Array.isArray(selection?.tickets) ? selection.tickets : [];
 
   const totalQuantity = Number(selection?.totalQuantity) || 0;
   const totalAmount = Number(selection?.totalAmount) || 0;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleContinue() {
+    if (!event?.id) {
+      setErrorMessage("Event information is missing.");
+      return;
+    }
+
+    if (tickets.length === 0) {
+      setErrorMessage("Please select at least one ticket.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
+
+      const order = await createOrder({
+        eventId: event.id,
+        items: tickets.map((ticket) => ({
+          ticketTypeId: ticket.ticketTypeId,
+          quantity: ticket.quantity,
+        })),
+      });
+
+      if (onOrderCreated) {
+        onOrderCreated(order);
+      }
+    } catch (error) {
+      console.error("Unable to create order:", error);
+
+      setErrorMessage(
+        error.message || "We couldn't create your order. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <section className="order-summary">
       <div className="order-summary-header">
-        <button type="button" className="order-summary-back" onClick={onBack}>
+        <button
+          type="button"
+          className="order-summary-back"
+          onClick={onBack}
+          disabled={isSubmitting}
+        >
           <ArrowLeft size={17} />
           Back to ticket selection
         </button>
@@ -78,6 +126,12 @@ function OrderSummary({ event, selection, onBack, onContinue }) {
         </div>
       </div>
 
+      {errorMessage && (
+        <div className="order-summary-error" role="alert">
+          {errorMessage}
+        </div>
+      )}
+
       <div className="order-summary-notice">
         <ShieldCheck size={20} />
 
@@ -85,8 +139,8 @@ function OrderSummary({ event, selection, onBack, onContinue }) {
           <strong>Secure checkout</strong>
 
           <p>
-            Your order and payment details will be processed securely when
-            checkout is connected to the backend.
+            Your order will be created securely using your authenticated
+            account.
           </p>
         </div>
       </div>
@@ -94,13 +148,14 @@ function OrderSummary({ event, selection, onBack, onContinue }) {
       <button
         type="button"
         className="order-summary-continue"
-        onClick={onContinue}
+        onClick={handleContinue}
+        disabled={isSubmitting || totalQuantity === 0}
       >
-        Continue to checkout
+        {isSubmitting ? "Creating order..." : "Continue to checkout"}
       </button>
 
       <p className="order-summary-footnote">
-        Checkout and payment processing are being connected to the Orders API.
+        You will continue to payment after your order is created.
       </p>
     </section>
   );

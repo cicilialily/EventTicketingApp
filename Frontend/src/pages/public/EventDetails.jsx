@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { getEventById } from "../../services/eventService";
+import { payOrder } from "../../services/orderService";
 
 import TicketSelection from "../../components/tickets/TicketSelection";
 import OrderSummary from "../../components/tickets/OrderSummary";
@@ -16,7 +17,11 @@ function EventDetails() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [selectedTickets, setSelectedTickets] = useState(null);
-  const [checkoutMessage, setCheckoutMessage] = useState("");
+  const [createdOrder, setCreatedOrder] = useState(null);
+
+  const [isPaying, setIsPaying] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -57,18 +62,55 @@ function EventDetails() {
 
   function handleTicketContinue(selection) {
     setSelectedTickets(selection);
-    setCheckoutMessage("");
+    setCreatedOrder(null);
+    setPaymentMessage("");
+    setPaymentError("");
   }
 
   function handleBackToSelection() {
     setSelectedTickets(null);
-    setCheckoutMessage("");
+    setCreatedOrder(null);
+    setPaymentMessage("");
+    setPaymentError("");
   }
 
-  function handleCheckout() {
-    setCheckoutMessage(
-      "Checkout will be connected when the Orders and Tickets API is ready.",
-    );
+  function handleOrderCreated(order) {
+    setCreatedOrder(order);
+    setPaymentMessage("");
+    setPaymentError("");
+  }
+
+  async function handlePayment() {
+    if (!createdOrder?.id) {
+      setPaymentError("No order is available for payment.");
+      return;
+    }
+
+    try {
+      setIsPaying(true);
+      setPaymentError("");
+      setPaymentMessage("");
+
+      const paidOrder = await payOrder(createdOrder.id);
+
+      setCreatedOrder(paidOrder);
+      setPaymentMessage("Payment successful. Your ticket has been generated.");
+    } catch (error) {
+      console.error("Unable to process payment:", error);
+
+      setPaymentError(
+        error.message || "We couldn't complete your payment. Please try again.",
+      );
+    } finally {
+      setIsPaying(false);
+    }
+  }
+
+  function handleStartOver() {
+    setSelectedTickets(null);
+    setCreatedOrder(null);
+    setPaymentMessage("");
+    setPaymentError("");
   }
 
   if (isLoading) {
@@ -138,6 +180,9 @@ function EventDetails() {
     "Location to be announced";
 
   const ticketTypes = Array.isArray(event.ticketTypes) ? event.ticketTypes : [];
+
+  const paidTickets =
+    createdOrder?.items?.flatMap((item) => item.tickets || []) || [];
 
   return (
     <main className="event-details-page">
@@ -209,24 +254,120 @@ function EventDetails() {
           </div>
         </section>
 
-        {/* Ticket purchasing flow */}
         <section className="event-ticket-section">
           {!selectedTickets ? (
             <TicketSelection
               ticketTypes={ticketTypes}
               onContinue={handleTicketContinue}
             />
-          ) : (
+          ) : !createdOrder ? (
             <OrderSummary
               event={event}
               selection={selectedTickets}
               onBack={handleBackToSelection}
-              onContinue={handleCheckout}
+              onOrderCreated={handleOrderCreated}
             />
-          )}
+          ) : createdOrder.status !== "PAID" ? (
+            <section className="order-payment-card">
+              <div className="order-payment-icon">✓</div>
 
-          {checkoutMessage && (
-            <p className="event-ticket-selection-message">{checkoutMessage}</p>
+              <span className="order-payment-eyebrow">ORDER CREATED</span>
+
+              <h2>Your order is ready for payment</h2>
+
+              <p>
+                Your order <strong>{createdOrder.orderNumber}</strong> has been
+                created successfully.
+              </p>
+
+              <div className="order-payment-details">
+                <div>
+                  <span>Status</span>
+                  <strong>{createdOrder.status}</strong>
+                </div>
+
+                <div>
+                  <span>Total</span>
+                  <strong>
+                    ₦{Number(createdOrder.totalAmount).toLocaleString("en-NG")}
+                  </strong>
+                </div>
+              </div>
+
+              {paymentError && (
+                <div className="order-payment-error" role="alert">
+                  {paymentError}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="order-payment-button"
+                onClick={handlePayment}
+                disabled={isPaying}
+              >
+                {isPaying ? "Processing payment..." : "Pay for order"}
+              </button>
+
+              <button
+                type="button"
+                className="order-payment-back"
+                onClick={handleBackToSelection}
+                disabled={isPaying}
+              >
+                Choose different tickets
+              </button>
+            </section>
+          ) : (
+            <section className="order-payment-success">
+              <div className="order-payment-success-icon">✓</div>
+
+              <span className="order-payment-eyebrow">PAYMENT COMPLETE</span>
+
+              <h2>Your ticket is ready!</h2>
+
+              <p>
+                Your order <strong>{createdOrder.orderNumber}</strong> has been
+                paid successfully.
+              </p>
+
+              <div className="order-payment-details">
+                <div>
+                  <span>Order status</span>
+                  <strong>{createdOrder.status}</strong>
+                </div>
+
+                <div>
+                  <span>Tickets generated</span>
+                  <strong>{paidTickets.length}</strong>
+                </div>
+              </div>
+
+              {paymentMessage && (
+                <div className="order-payment-success-message">
+                  {paymentMessage}
+                </div>
+              )}
+
+              {paidTickets.length > 0 && (
+                <div className="generated-ticket-list">
+                  {paidTickets.map((ticket) => (
+                    <div key={ticket.id} className="generated-ticket">
+                      <span>Ticket number</span>
+                      <strong>{ticket.ticketNumber}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="order-payment-button"
+                onClick={handleStartOver}
+              >
+                Back to event
+              </button>
+            </section>
           )}
         </section>
       </div>
