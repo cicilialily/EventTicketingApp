@@ -1,10 +1,7 @@
 generator client {
-  provider              = "prisma-client"
-  output                = "../src/generated/prisma"
-  moduleFormat          = "esm"
-  generatedFileExtension = "ts"
-  importFileExtension   = "ts"
+  provider               = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
 }
@@ -85,21 +82,21 @@ model EventCategory {
 }
 
 model Event {
-  id          String        @id @default(uuid())
+  id          String         @id @default(uuid())
   organizerId String
-  categoryId  String
+  categoryId  String?        // <-- Optional
   title       String
   description String
   venue       String
   address     String
   startDate   DateTime
   endDate     DateTime
-  status      EventStatus   @default(DRAFT)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  status      EventStatus    @default(DRAFT)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  organizer   User          @relation(fields: [organizerId], references: [id], onDelete: Cascade)
-  category    EventCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  organizer   User           @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  category    EventCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict) // <-- Optional
   images      EventImage[]
   ticketTypes TicketType[]
   orders      Order[]
@@ -110,7 +107,6 @@ model Event {
   @@index([status])
   @@index([startDate])
 }
-
 model EventImage {
   id        String   @id @default(uuid())
   eventId   String
