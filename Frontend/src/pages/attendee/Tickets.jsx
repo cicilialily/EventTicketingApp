@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
-  MapPin,
-  Ticket as TicketIcon,
   Clock,
-  CheckCircle2,
-  XCircle,
   LoaderCircle,
+  MapPin,
+  QrCode,
+  Ticket as TicketIcon,
   TicketCheck,
+  X,
+  XCircle,
+  CheckCircle2,
 } from "lucide-react";
-import { getMyTickets } from "../../services/myTickets.service";
+import { getMyTickets, getTicketQr } from "../../services/myTickets.service";
 import "./Tickets.css";
 
 function formatDate(value) {
@@ -83,6 +85,11 @@ function Tickets() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [qrImageUrl, setQrImageUrl] = useState("");
+  const [isQrLoading, setIsQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
+
   useEffect(() => {
     async function loadTickets() {
       try {
@@ -105,6 +112,45 @@ function Tickets() {
 
     loadTickets();
   }, []);
+
+  async function handleViewQr(ticket) {
+    try {
+      setSelectedTicket(ticket);
+      setQrImageUrl("");
+      setQrError("");
+      setIsQrLoading(true);
+
+      const qrBlob = await getTicketQr(ticket.id);
+
+      const imageUrl = URL.createObjectURL(qrBlob);
+
+      setQrImageUrl(imageUrl);
+    } catch (error) {
+      console.error("Failed to load ticket QR:", error);
+
+      setQrError(error.message || "We couldn't load this ticket's QR code.");
+    } finally {
+      setIsQrLoading(false);
+    }
+  }
+
+  function handleCloseQr() {
+    if (qrImageUrl) {
+      URL.revokeObjectURL(qrImageUrl);
+    }
+
+    setSelectedTicket(null);
+    setQrImageUrl("");
+    setQrError("");
+  }
+
+  useEffect(() => {
+    return () => {
+      if (qrImageUrl) {
+        URL.revokeObjectURL(qrImageUrl);
+      }
+    };
+  }, [qrImageUrl]);
 
   if (isLoading) {
     return (
@@ -195,6 +241,7 @@ function Tickets() {
 
                     <div className={getStatusClass(ticket.status)}>
                       {getStatusIcon(ticket.status)}
+
                       <span>
                         {ticket.status
                           ? ticket.status.replace("_", " ")
@@ -217,6 +264,7 @@ function Tickets() {
                     <div className="ticket-details">
                       <div className="ticket-detail">
                         <CalendarDays size={18} />
+
                         <div>
                           <span>Date</span>
                           <strong>{formatDate(event?.startDate)}</strong>
@@ -225,6 +273,7 @@ function Tickets() {
 
                       <div className="ticket-detail">
                         <Clock size={18} />
+
                         <div>
                           <span>Time</span>
                           <strong>
@@ -235,6 +284,7 @@ function Tickets() {
 
                       <div className="ticket-detail">
                         <MapPin size={18} />
+
                         <div>
                           <span>Location</span>
                           <strong>
@@ -254,10 +304,14 @@ function Tickets() {
                         <strong>{ticket.ticketNumber}</strong>
                       </div>
 
-                      <div>
-                        <span>Ticket Type</span>
-                        <strong>{ticketType?.name || "N/A"}</strong>
-                      </div>
+                      <button
+                        type="button"
+                        className="view-qr-button"
+                        onClick={() => handleViewQr(ticket)}
+                      >
+                        <QrCode size={18} />
+                        View QR Code
+                      </button>
                     </div>
                   </div>
                 </article>
@@ -266,6 +320,65 @@ function Tickets() {
           </section>
         )}
       </div>
+
+      {selectedTicket && (
+        <div className="qr-modal-overlay" onClick={handleCloseQr}>
+          <div
+            className="qr-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="qr-modal-close"
+              onClick={handleCloseQr}
+              aria-label="Close QR code"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="qr-modal-icon">
+              <QrCode size={26} />
+            </div>
+
+            <span className="tickets-eyebrow">DIGITAL TICKET</span>
+
+            <h2>{selectedTicket.event?.title || "Event Ticket"}</h2>
+
+            <p className="qr-ticket-number">{selectedTicket.ticketNumber}</p>
+
+            <div className="qr-code-container">
+              {isQrLoading && (
+                <div className="qr-loading">
+                  <LoaderCircle className="tickets-spinner" size={34} />
+                  <span>Loading QR code...</span>
+                </div>
+              )}
+
+              {!isQrLoading && qrError && (
+                <div className="qr-error">
+                  <XCircle size={32} />
+                  <p>{qrError}</p>
+                </div>
+              )}
+
+              {!isQrLoading && !qrError && qrImageUrl && (
+                <img
+                  src={qrImageUrl}
+                  alt={`QR code for ${selectedTicket.ticketNumber}`}
+                  className="qr-code-image"
+                />
+              )}
+            </div>
+
+            {!isQrLoading && !qrError && qrImageUrl && (
+              <p className="qr-instruction">
+                Present this QR code at the event entrance for ticket
+                validation.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
