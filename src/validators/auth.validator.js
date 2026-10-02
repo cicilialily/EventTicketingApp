@@ -23,11 +23,16 @@ export const registerSchema = z
       .regex(/[0-9]/, "Password must contain at least one number"),
 
     confirmPassword: z.string().min(1, "Please confirm your password"),
+
+    role: z.enum(["USER", "ORGANIZER"], {
+      message: "Please select an account type",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
 export const loginSchema = z.object({
   email: z
     .string()
@@ -40,6 +45,7 @@ export const loginSchema = z.object({
     .min(1, "Password is required")
     .max(128, "Password is too long"),
 });
+
 export const updateProfileSchema = z.object({
   name: z
     .string()
@@ -55,6 +61,7 @@ export const updateProfileSchema = z.object({
     .toLowerCase()
     .optional(),
 });
+
 export const forgotPasswordSchema = z.object({
   email: z
     .string()
@@ -62,6 +69,7 @@ export const forgotPasswordSchema = z.object({
     .email("Please provide a valid email address")
     .toLowerCase(),
 });
+
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(1, "Reset token is required"),
@@ -80,35 +88,25 @@ export const resetPasswordSchema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
 export const changePasswordSchema = z
-    .object({
-        currentPassword: z
-            .string()
-            .min(1, "Current password is required")
-            .max(128, "Current password is too long"),
+  .object({
+    currentPassword: z
+      .string()
+      .min(1, "Current password is required")
+      .max(128, "Current password is too long"),
 
-        newPassword: z
-            .string()
-            .min(8, "Password must be at least 8 characters")
-            .max(128, "Password must not exceed 128 characters")
-            .regex(
-                /[A-Z]/,
-                "Password must contain at least one uppercase letter"
-            )
-            .regex(
-                /[a-z]/,
-                "Password must contain at least one lowercase letter"
-            )
-            .regex(
-                /[0-9]/,
-                "Password must contain at least one number"
-            ),
+    newPassword: z
+      .string()
+      .min(8, "New password must be at least 8 characters")
+      .max(128, "New password is too long")
+      .regex(/[A-Z]/, "New password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "New password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "New password must contain at least one number"),
 
-        confirmPassword: z
-            .string()
-            .min(1, "Please confirm your password")
-    })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-        message: "Passwords do not match",
-        path: ["confirmPassword"]
-    });
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });

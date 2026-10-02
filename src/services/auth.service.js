@@ -2,7 +2,7 @@ import prisma from "../config/database.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { generateAccessToken } from "../utils/jwt.js";
 
-export async function registerUser({ name, email, password }) {
+export async function registerUser({ name, email, password, role }) {
   const normalizedEmail = email.trim().toLowerCase();
 
   const existingUser = await prisma.user.findUnique({
@@ -13,7 +13,21 @@ export async function registerUser({ name, email, password }) {
 
   if (existingUser) {
     const error = new Error("An account with this email already exists.");
+
     error.code = "EMAIL_EXISTS";
+    throw error;
+  }
+
+  /*
+   * Defense in depth:
+   * Only USER and ORGANIZER accounts can be created
+   * through public registration.
+   *
+   * ADMIN accounts must never be self-created.
+   */
+  if (!["USER", "ORGANIZER"].includes(role)) {
+    const error = new Error("Invalid account type.");
+    error.code = "INVALID_ROLE";
     throw error;
   }
 
@@ -25,8 +39,9 @@ export async function registerUser({ name, email, password }) {
         name: name.trim(),
         email: normalizedEmail,
         passwordHash,
-        role: "USER",
+        role,
       },
+
       select: {
         id: true,
         name: true,

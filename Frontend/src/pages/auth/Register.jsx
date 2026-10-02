@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  CalendarPlus,
+  UserRound,
+} from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
 import authPeople from "../../assets/auth-people.png";
@@ -14,6 +18,7 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "",
   });
 
   const [error, setError] = useState("");
@@ -26,6 +31,15 @@ function Register() {
       ...current,
       [name]: value,
     }));
+  };
+
+  const handleRoleChange = (role) => {
+    setFormData((current) => ({
+      ...current,
+      role,
+    }));
+
+    setError("");
   };
 
   const validateForm = () => {
@@ -57,6 +71,10 @@ function Register() {
       return "Passwords do not match.";
     }
 
+    if (!["USER", "ORGANIZER"].includes(formData.role)) {
+      return "Please select an account type.";
+    }
+
     return "";
   };
 
@@ -79,7 +97,8 @@ function Register() {
       navigate("/login", {
         replace: true,
         state: {
-          message: "Your account was created successfully. Please sign in.",
+          message:
+            "Your account was created successfully. Please sign in.",
         },
       });
     } catch (requestError) {
@@ -105,8 +124,8 @@ function Register() {
             </h1>
 
             <p>
-              Create your account and start discovering events that match your
-              interests.
+              Create your account and start discovering events that
+              match your interests.
             </p>
           </div>
 
@@ -121,12 +140,19 @@ function Register() {
           <div className="auth-card">
             <div className="auth-card-header">
               <p className="auth-eyebrow">GET STARTED</p>
+
               <h2>Create account</h2>
-              <p>Join EventTicketing and start exploring events.</p>
+
+              <p>
+                Join EventTicketing as an attendee or event organizer.
+              </p>
             </div>
 
             {error && (
-              <div className="auth-alert auth-alert-error" role="alert">
+              <div
+                className="auth-alert auth-alert-error"
+                role="alert"
+              >
                 {error}
               </div>
             )}
@@ -161,6 +187,76 @@ function Register() {
               </div>
 
               <div className="auth-field">
+                <div className="auth-field-heading">
+                  <label>Account type</label>
+                </div>
+
+                <p className="auth-help-text auth-role-description">
+                  Choose how you plan to use EventTicketing.
+                </p>
+
+                <div className="auth-role-options">
+                  <button
+                    type="button"
+                    className={`auth-role-card ${
+                      formData.role === "USER"
+                        ? "auth-role-card-selected"
+                        : ""
+                    }`}
+                    onClick={() => handleRoleChange("USER")}
+                    aria-pressed={formData.role === "USER"}
+                  >
+                    <span className="auth-role-icon">
+                      <UserRound size={22} />
+                    </span>
+
+                    <span className="auth-role-content">
+                      <strong>Attendee</strong>
+
+                      <small>
+                        Discover events, purchase tickets, and manage
+                        your tickets.
+                      </small>
+                    </span>
+
+                    <span className="auth-role-radio">
+                      <span />
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`auth-role-card ${
+                      formData.role === "ORGANIZER"
+                        ? "auth-role-card-selected"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      handleRoleChange("ORGANIZER")
+                    }
+                    aria-pressed={formData.role === "ORGANIZER"}
+                  >
+                    <span className="auth-role-icon">
+                      <CalendarPlus size={22} />
+                    </span>
+
+                    <span className="auth-role-content">
+                      <strong>Organizer</strong>
+
+                      <small>
+                        Create events, sell tickets, and manage
+                        attendees.
+                      </small>
+                    </span>
+
+                    <span className="auth-role-radio">
+                      <span />
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="auth-field">
                 <label htmlFor="password">Password</label>
 
                 <input
@@ -174,12 +270,15 @@ function Register() {
                 />
 
                 <small className="auth-help-text">
-                  At least 8 characters with uppercase, lowercase, and a number.
+                  At least 8 characters with uppercase, lowercase, and
+                  a number.
                 </small>
               </div>
 
               <div className="auth-field">
-                <label htmlFor="confirmPassword">Confirm password</label>
+                <label htmlFor="confirmPassword">
+                  Confirm password
+                </label>
 
                 <input
                   id="confirmPassword"
@@ -197,12 +296,15 @@ function Register() {
                 className="auth-submit"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating account..." : "Create account"}
+                {isSubmitting
+                  ? "Creating account..."
+                  : "Create account"}
               </button>
             </form>
 
             <p className="auth-switch">
-              Already have an account? <Link to="/login">Sign in</Link>
+              Already have an account?{" "}
+              <Link to="/login">Sign in</Link>
             </p>
           </div>
         </section>

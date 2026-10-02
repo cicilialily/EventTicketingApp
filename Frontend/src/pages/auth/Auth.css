@@ -221,6 +221,120 @@
   color: #817f8c;
 }
 
+/* =========================
+   ACCOUNT TYPE
+========================= */
+
+.auth-role-description {
+  margin: -2px 0 2px;
+}
+
+.auth-role-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.auth-role-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  width: 100%;
+  min-height: 128px;
+  padding: 16px;
+  border: 1px solid #dddbe7;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #191724;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.auth-role-card:hover {
+  border-color: #b9aefb;
+  background: #fcfbff;
+  transform: translateY(-1px);
+}
+
+.auth-role-card-selected {
+  border-color: #5b3df5;
+  background: #faf9ff;
+  box-shadow: 0 0 0 3px rgba(91, 61, 245, 0.09);
+}
+
+.auth-role-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: #f0edff;
+  color: #5b3df5;
+}
+
+.auth-role-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 16px;
+}
+
+.auth-role-content strong {
+  color: #242131;
+  font-size: 0.9rem;
+}
+
+.auth-role-content small {
+  color: #777384;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.auth-role-radio {
+  position: absolute;
+  top: 16px;
+  right: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid #c9c5d5;
+  border-radius: 50%;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.auth-role-card-selected .auth-role-radio {
+  border-color: #5b3df5;
+}
+
+.auth-role-radio span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.auth-role-card-selected .auth-role-radio span {
+  background: #5b3df5;
+}
+
+/* =========================
+   SUBMIT
+========================= */
+
 .auth-submit {
   width: 100%;
   min-height: 54px;
@@ -362,6 +476,14 @@
 
   .auth-forgot-link {
     white-space: nowrap;
+  }
+
+  .auth-role-options {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-role-card {
+    min-height: 110px;
   }
 }
 

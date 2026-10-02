@@ -8,6 +8,7 @@ export async function registerUser(userData) {
       email: userData.email.trim(),
       password: userData.password,
       confirmPassword: userData.confirmPassword,
+      role: userData.role,
     }),
   });
 

@@ -59,6 +59,14 @@ export async function register(req, res) {
       });
     }
 
+    if (error.code === "INVALID_ROLE") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid account type.",
+        data: null,
+      });
+    }
+
     console.error("Registration error:", error);
 
     return res.status(500).json({
