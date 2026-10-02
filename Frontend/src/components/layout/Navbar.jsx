@@ -43,6 +43,13 @@ function Navbar() {
               My Tickets
             </NavLink>
           )}
+
+          {isAuthenticated &&
+            ["ORGANIZER", "ADMIN"].includes(user?.role?.toUpperCase()) && (
+              <NavLink to="/organizer/check-in" className={getNavLinkClass}>
+                Check-In
+              </NavLink>
+            )}
         </nav>
 
         {/* Account section */}
