@@ -113,6 +113,29 @@ export async function getPublishedEventById(id) {
 }
 
 /**
+ * Get events managed by the authenticated organizer/admin.
+ *
+ * Organizers see only their own events.
+ * Admins see all events.
+ */
+export async function getManagedEvents(userId, role) {
+  const where =
+    role === "ADMIN"
+      ? {}
+      : {
+          organizerId: userId,
+        };
+
+  return prisma.event.findMany({
+    where,
+    include: eventDetailInclude,
+    orderBy: {
+      startDate: "asc",
+    },
+  });
+}
+
+/**
  * Create an event for the authenticated organizer.
  */
 export async function createEvent(organizerId, eventData) {

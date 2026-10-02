@@ -298,6 +298,13 @@ router.get("/categories", listCategories);
  *       404:
  *         description: Event not found
  */
+
+router.get(
+  "/my-events",
+  authenticate,
+  authorizeRoles("ORGANIZER", "ADMIN"),
+  listManagedEvents,
+);
 router.get("/:id", getEvent);
 
 /**

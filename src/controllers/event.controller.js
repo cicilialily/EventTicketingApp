@@ -74,6 +74,26 @@ export async function getEvent(req, res) {
   }
 }
 
+export async function listManagedEvents(req, res) {
+  try {
+    const events = await getManagedEvents(req.user.id, req.user.role);
+
+    return res.status(200).json({
+      success: true,
+      message: "Managed events retrieved successfully",
+      data: events,
+    });
+  } catch (error) {
+    console.error("List managed events error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to retrieve managed events",
+      data: null,
+    });
+  }
+}
+
 export async function createNewEvent(req, res) {
   try {
     const result = createEventSchema.safeParse(req.body);
