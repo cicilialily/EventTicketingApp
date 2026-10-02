@@ -2,8 +2,8 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
-function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+function ProtectedRoute({ allowedRoles = [] }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -24,6 +24,18 @@ function ProtectedRoute() {
         }}
       />
     );
+  }
+
+  if (allowedRoles.length > 0) {
+    const userRole = user?.role?.toUpperCase();
+
+    const hasPermission = allowedRoles.some(
+      (role) => role.toUpperCase() === userRole,
+    );
+
+    if (!hasPermission) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <Outlet />;
