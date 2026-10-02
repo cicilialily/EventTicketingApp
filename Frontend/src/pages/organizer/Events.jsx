@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   CircleAlert,
@@ -8,6 +9,7 @@ import {
   Plus,
   Ticket,
 } from "lucide-react";
+
 import { getMyEvents } from "../../services/eventManagement.service";
 import "./Events.css";
 
@@ -47,6 +49,8 @@ function getStatusClass(status) {
 }
 
 function Events() {
+  const navigate = useNavigate();
+
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -86,8 +90,11 @@ function Events() {
   const stats = useMemo(() => {
     return {
       total: events.length,
+
       published: events.filter((event) => event.status === "PUBLISHED").length,
+
       drafts: events.filter((event) => event.status === "DRAFT").length,
+
       cancelled: events.filter((event) => event.status === "CANCELLED").length,
     };
   }, [events]);
@@ -97,7 +104,9 @@ function Events() {
       <main className="managed-events-page">
         <div className="managed-events-state">
           <LoaderCircle size={38} className="managed-events-spinner" />
+
           <h2>Loading your events...</h2>
+
           <p>Please wait while we retrieve your event management data.</p>
         </div>
       </main>
@@ -113,6 +122,7 @@ function Events() {
           </div>
 
           <h2>Unable to load events</h2>
+
           <p>{errorMessage}</p>
 
           <button
@@ -142,9 +152,7 @@ function Events() {
           <button
             type="button"
             className="create-event-button"
-            onClick={() =>
-              window.dispatchEvent(new CustomEvent("open-create-event"))
-            }
+            onClick={() => navigate("/organizer/events/new")}
           >
             <Plus size={19} />
             Create Event
@@ -176,6 +184,7 @@ function Events() {
         <section className="managed-events-toolbar">
           <div>
             <h2>Event List</h2>
+
             <p>
               {filteredEvents.length}{" "}
               {filteredEvents.length === 1 ? "event" : "events"}

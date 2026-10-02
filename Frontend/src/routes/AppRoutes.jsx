@@ -8,19 +8,17 @@ import EventDetails from "../pages/public/EventDetails";
 
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 import Tickets from "../pages/attendee/Tickets";
 import Profile from "../pages/attendee/Profile";
 
-import ProtectedRoute from "./ProtectedRoute";
-
-import ForgotPassword from "../pages/auth/ForgotPassword";
-
-import ResetPassword from "../pages/auth/ResetPassword";
-
 import CheckIn from "../pages/organizer/CheckIn";
-
 import OrganizerEvents from "../pages/organizer/Events";
+import CreateEvent from "../pages/organizer/CreateEvent";
+
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -40,20 +38,19 @@ function AppRoutes() {
         {/* Protected attendee routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/tickets" element={<Tickets />} />
+
           <Route path="/profile" element={<Profile />} />
-          {/* Protected organizer/admin routes */}
-          <Route
-            element={<ProtectedRoute allowedRoles={["ORGANIZER", "ADMIN"]} />}
-          >
-            <Route path="/organizer/check-in" element={<CheckIn />} />
-          </Route>
-          {/* Protected organizer/admin routes */}
-          <Route
-            element={<ProtectedRoute allowedRoles={["ORGANIZER", "ADMIN"]} />}
-          >
-            <Route path="/organizer/check-in" element={<CheckIn />} />
-            <Route path="/organizer/events" element={<OrganizerEvents />} />
-          </Route>
+        </Route>
+
+        {/* Protected organizer/admin routes */}
+        <Route
+          element={<ProtectedRoute allowedRoles={["ORGANIZER", "ADMIN"]} />}
+        >
+          <Route path="/organizer/events" element={<OrganizerEvents />} />
+
+          <Route path="/organizer/events/new" element={<CreateEvent />} />
+
+          <Route path="/organizer/check-in" element={<CheckIn />} />
         </Route>
       </Route>
     </Routes>
