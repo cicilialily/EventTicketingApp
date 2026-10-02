@@ -92,3 +92,20 @@ export async function authenticate(req, res, next) {
     });
   }
 }
+export function authorizeRoles(...allowedRoles) {
+  return (req, res, next) => {
+    const userRole = req.user?.role?.toUpperCase();
+
+    const roles = allowedRoles.map((role) => role.toUpperCase());
+
+    if (!userRole || !roles.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to perform this action.",
+        data: null,
+      });
+    }
+
+    next();
+  };
+}
