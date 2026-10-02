@@ -20,6 +20,8 @@ import ResetPassword from "../pages/auth/ResetPassword";
 
 import CheckIn from "../pages/organizer/CheckIn";
 
+import OrganizerEvents from "../pages/organizer/Events";
+
 function AppRoutes() {
   return (
     <Routes>
@@ -44,6 +46,13 @@ function AppRoutes() {
             element={<ProtectedRoute allowedRoles={["ORGANIZER", "ADMIN"]} />}
           >
             <Route path="/organizer/check-in" element={<CheckIn />} />
+          </Route>
+          {/* Protected organizer/admin routes */}
+          <Route
+            element={<ProtectedRoute allowedRoles={["ORGANIZER", "ADMIN"]} />}
+          >
+            <Route path="/organizer/check-in" element={<CheckIn />} />
+            <Route path="/organizer/events" element={<OrganizerEvents />} />
           </Route>
         </Route>
       </Route>

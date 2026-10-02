@@ -10,6 +10,7 @@ import {
   getEvent,
   listCategories,
   listEvents,
+  listManagedEvents,
   updateExistingEvent,
 } from "../controllers/event.controller.js";
 

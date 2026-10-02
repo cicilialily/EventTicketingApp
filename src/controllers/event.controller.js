@@ -9,6 +9,7 @@ import {
   createCategory,
   createEvent,
   getCategories,
+  getManagedEvents,
   getPublishedEventById,
   getPublishedEvents,
   updateEvent,
