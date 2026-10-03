@@ -4,13 +4,19 @@ import {
   CalendarDays,
   CircleAlert,
   Clock,
+  Edit3,
   LoaderCircle,
   MapPin,
   Plus,
   Ticket,
+  Trash2,
 } from "lucide-react";
 
-import { getMyEvents } from "../../services/eventManagement.service";
+import {
+  cancelManagedEvent,
+  getMyEvents,
+} from "../../services/eventManagement.service";
+
 import "./Events.css";
 
 function formatDate(value) {
@@ -55,27 +61,28 @@ function Events() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [cancellingEventId, setCancellingEventId] = useState("");
+
+  async function loadEvents() {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const data = await getMyEvents();
+
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to load managed events:", error);
+
+      setErrorMessage(
+        error.message || "We couldn't load your events. Please try again.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadEvents() {
-      try {
-        setIsLoading(true);
-        setErrorMessage("");
-
-        const data = await getMyEvents();
-
-        setEvents(Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error("Failed to load managed events:", error);
-
-        setErrorMessage(
-          error.message || "We couldn't load your events. Please try again.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     loadEvents();
   }, []);
 
@@ -99,6 +106,38 @@ function Events() {
     };
   }, [events]);
 
+  async function handleCancelEvent(event) {
+    const confirmed = window.confirm(
+      `Cancel "${event.title}"? This will change the event status to CANCELLED.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setCancellingEventId(event.id);
+      setErrorMessage("");
+
+      await cancelManagedEvent(event.id);
+
+      await loadEvents();
+    } catch (error) {
+      console.error("Failed to cancel event:", error);
+
+      setErrorMessage(
+        error.message || "Unable to cancel this event. Please try again.",
+      );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } finally {
+      setCancellingEventId("");
+    }
+  }
+
   if (isLoading) {
     return (
       <main className="managed-events-page">
@@ -113,7 +152,7 @@ function Events() {
     );
   }
 
-  if (errorMessage) {
+  if (errorMessage && events.length === 0) {
     return (
       <main className="managed-events-page">
         <div className="managed-events-state">
@@ -128,7 +167,7 @@ function Events() {
           <button
             type="button"
             className="managed-events-retry"
-            onClick={() => window.location.reload()}
+            onClick={loadEvents}
           >
             Try Again
           </button>
@@ -158,6 +197,13 @@ function Events() {
             Create Event
           </button>
         </section>
+
+        {errorMessage && (
+          <div className="managed-events-inline-error" role="alert">
+            <CircleAlert size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         <section className="managed-event-stats">
           <div className="managed-stat-card">
@@ -294,15 +340,51 @@ function Events() {
                       </div>
                     </div>
 
-                    <div className="managed-event-meta">
-                      <div>
-                        <span>Tickets</span>
+                    <div className="managed-event-right">
+                      <div className="managed-event-meta">
+                        <div>
+                          <span>Tickets</span>
 
-                        <strong>
-                          {ticketsSold} / {totalTickets}
-                        </strong>
+                          <strong>
+                            {ticketsSold} / {totalTickets}
+                          </strong>
 
-                        <Ticket size={17} />
+                          <Ticket size={17} />
+                        </div>
+                      </div>
+
+                      <div className="managed-event-actions">
+                        <button
+                          type="button"
+                          className="managed-event-edit-button"
+                          onClick={() =>
+                            navigate(`/organizer/events/${event.id}/edit`)
+                          }
+                        >
+                          <Edit3 size={16} />
+                          Edit
+                        </button>
+
+                        {event.status !== "CANCELLED" && (
+                          <button
+                            type="button"
+                            className="managed-event-delete-button"
+                            onClick={() => handleCancelEvent(event)}
+                            disabled={cancellingEventId === event.id}
+                          >
+                            {cancellingEventId === event.id ? (
+                              <LoaderCircle
+                                size={16}
+                                className="managed-events-spinner"
+                              />
+                            ) : (
+                              <Trash2 size={16} />
+                            )}
+                            {cancellingEventId === event.id
+                              ? "Cancelling..."
+                              : "Cancel"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -376,3 +376,92 @@
     width: 100%;
   }
 }
+.managed-events-inline-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid #f1c3c7;
+  border-radius: 10px;
+  background: #fff6f7;
+  color: #b42318;
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.managed-event-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 22px;
+  flex-shrink: 0;
+}
+
+.managed-event-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.managed-event-edit-button,
+.managed-event-delete-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.managed-event-edit-button {
+  border: 1px solid #d8d1f2;
+  background: #faf9ff;
+  color: #5a42a8;
+}
+
+.managed-event-edit-button:hover {
+  background: #f2efff;
+}
+
+.managed-event-delete-button {
+  border: 1px solid #efc6ca;
+  background: #fff8f8;
+  color: #b42318;
+}
+
+.managed-event-delete-button:hover {
+  background: #fff0f1;
+}
+
+.managed-event-delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 850px) {
+  .managed-event-right {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .managed-event-right {
+    width: 100%;
+  }
+
+  .managed-event-actions {
+    width: 100%;
+  }
+
+  .managed-event-edit-button,
+  .managed-event-delete-button {
+    flex: 1;
+  }
+}

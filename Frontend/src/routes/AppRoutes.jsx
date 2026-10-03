@@ -17,6 +17,7 @@ import Profile from "../pages/attendee/Profile";
 import CheckIn from "../pages/organizer/CheckIn";
 import OrganizerEvents from "../pages/organizer/Events";
 import CreateEvent from "../pages/organizer/CreateEvent";
+import EditEvent from "../pages/organizer/EditEvent";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -51,6 +52,8 @@ function AppRoutes() {
           <Route path="/organizer/events/new" element={<CreateEvent />} />
 
           <Route path="/organizer/check-in" element={<CheckIn />} />
+
+          <Route path="/organizer/events/:id/edit" element={<EditEvent />} />
         </Route>
       </Route>
     </Routes>
