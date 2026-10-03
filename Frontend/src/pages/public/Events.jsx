@@ -2,12 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import EventCard from "../../components/events/EventCard";
-import { eventCategories, mockEvents } from "../../data/mockEvents";
+import {
+  getEventCategories,
+  getEvents,
+} from "../../services/eventService";
 
 import "./Events.css";
 
 function Events() {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const [events, setEvents] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || "",
@@ -17,23 +26,64 @@ function Events() {
     searchParams.get("category") || "All",
   );
 
-  // Keep the page state synchronized when the URL changes.
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const [eventData, categoryData] = await Promise.all([
+          getEvents(),
+          getEventCategories(),
+        ]);
+
+        setEvents(Array.isArray(eventData) ? eventData : []);
+
+        setCategories(
+          Array.isArray(categoryData) ? categoryData : [],
+        );
+      } catch (error) {
+        console.error("Failed to load events:", error);
+
+        setErrorMessage(
+          error.message ||
+            "Unable to load events. Please try again.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  // Keep the page synchronized with the URL.
   useEffect(() => {
     setSearchTerm(searchParams.get("search") || "");
-    setSelectedCategory(searchParams.get("category") || "All");
+    setSelectedCategory(
+      searchParams.get("category") || "All",
+    );
   }, [searchParams]);
 
   const filteredEvents = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = searchTerm
+      .trim()
+      .toLowerCase();
 
-    return mockEvents.filter((event) => {
-      const title = event.title?.toLowerCase() || "";
-      const location = event.location?.toLowerCase() || "";
+    return events.filter((event) => {
+      const title =
+        event.title?.toLowerCase() || "";
+
+      const location =
+        event.location?.toLowerCase() || "";
+
       const category =
         typeof event.category === "string"
           ? event.category.toLowerCase()
           : event.category?.name?.toLowerCase() || "";
-      const description = event.description?.toLowerCase() || "";
+
+      const description =
+        event.description?.toLowerCase() || "";
 
       const matchesSearch =
         !normalizedSearch ||
@@ -42,16 +92,20 @@ function Events() {
         category.includes(normalizedSearch) ||
         description.includes(normalizedSearch);
 
+      const eventCategory =
+        typeof event.category === "string"
+          ? event.category
+          : event.category?.name || "";
+
       const matchesCategory =
         selectedCategory === "All" ||
-        event.category === selectedCategory ||
-        event.category?.name === selectedCategory;
+        eventCategory === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [events, searchTerm, selectedCategory]);
 
-  const updateUrlParams = (search, category) => {
+  function updateUrlParams(search, category) {
     const nextParams = new URLSearchParams();
 
     if (search.trim()) {
@@ -63,46 +117,139 @@ function Events() {
     }
 
     setSearchParams(nextParams);
-  };
+  }
 
-  const handleSearchChange = (event) => {
+  function handleSearchChange(event) {
     const value = event.target.value;
 
     setSearchTerm(value);
+
     updateUrlParams(value, selectedCategory);
-  };
+  }
 
-  const handleCategoryChange = (category) => {
+  function handleCategoryChange(category) {
     setSelectedCategory(category);
-    updateUrlParams(searchTerm, category);
-  };
 
-  const clearFilters = () => {
+    updateUrlParams(searchTerm, category);
+  }
+
+  function clearFilters() {
     setSearchTerm("");
     setSelectedCategory("All");
     setSearchParams({});
-  };
+  }
+
+  if (isLoading) {
+    return (
+      <main className="events-page">
+        <section className="events-header">
+          <div className="container">
+            <p className="events-eyebrow">
+              EXPLORE EVENTS
+            </p>
+
+            <h1>Find your next experience.</h1>
+
+            <p className="events-header-description">
+              Discover concerts, conferences, sports
+              events, comedy shows, parties, and other
+              experiences happening around you.
+            </p>
+          </div>
+        </section>
+
+        <section className="events-content">
+          <div className="container">
+            <div className="events-empty-state">
+              <p className="events-empty-eyebrow">
+                LOADING
+              </p>
+
+              <h2>Loading events...</h2>
+
+              <p>
+                Please wait while we retrieve the latest
+                published events.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <main className="events-page">
+        <section className="events-header">
+          <div className="container">
+            <p className="events-eyebrow">
+              EXPLORE EVENTS
+            </p>
+
+            <h1>Find your next experience.</h1>
+
+            <p className="events-header-description">
+              Discover concerts, conferences, sports
+              events, comedy shows, parties, and other
+              experiences happening around you.
+            </p>
+          </div>
+        </section>
+
+        <section className="events-content">
+          <div className="container">
+            <div className="events-empty-state">
+              <p className="events-empty-eyebrow">
+                UNAVAILABLE
+              </p>
+
+              <h2>Unable to load events</h2>
+
+              <p>{errorMessage}</p>
+
+              <button
+                type="button"
+                className="events-empty-button"
+                onClick={() => window.location.reload()}
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const categoryNames = categories
+    .map((category) => category?.name)
+    .filter(Boolean);
 
   return (
     <main className="events-page">
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* HEADER */}
 
       <section className="events-header">
         <div className="container">
-          <p className="events-eyebrow">EXPLORE EVENTS</p>
+          <p className="events-eyebrow">
+            EXPLORE EVENTS
+          </p>
 
           <h1>Find your next experience.</h1>
 
           <p className="events-header-description">
-            Discover concerts, conferences, sports events, comedy shows,
-            parties, and other experiences happening around you.
+            Discover concerts, conferences, sports
+            events, comedy shows, parties, and other
+            experiences happening around you.
           </p>
 
           <div className="events-search-wrapper">
-            <span className="events-search-icon" aria-hidden="true">
-              🔍
+            <span
+              className="events-search-icon"
+              aria-hidden="true"
+            >
+              Search
             </span>
 
             <input
@@ -119,7 +266,11 @@ function Events() {
                 className="events-search-clear"
                 onClick={() => {
                   setSearchTerm("");
-                  updateUrlParams("", selectedCategory);
+
+                  updateUrlParams(
+                    "",
+                    selectedCategory,
+                  );
                 }}
                 aria-label="Clear search"
               >
@@ -130,15 +281,27 @@ function Events() {
         </div>
       </section>
 
-      {/* =========================
-          EVENTS CONTENT
-      ========================= */}
+      {/* EVENTS CONTENT */}
 
       <section className="events-content">
         <div className="container">
           <div className="events-toolbar">
             <div className="events-categories">
-              {eventCategories.map((category) => (
+              <button
+                type="button"
+                className={
+                  selectedCategory === "All"
+                    ? "events-category events-category-active"
+                    : "events-category"
+                }
+                onClick={() =>
+                  handleCategoryChange("All")
+                }
+              >
+                All
+              </button>
+
+              {categoryNames.map((category) => (
                 <button
                   type="button"
                   key={category}
@@ -147,7 +310,9 @@ function Events() {
                       ? "events-category events-category-active"
                       : "events-category"
                   }
-                  onClick={() => handleCategoryChange(category)}
+                  onClick={() =>
+                    handleCategoryChange(category)
+                  }
                 >
                   {category}
                 </button>
@@ -156,11 +321,16 @@ function Events() {
 
             <div className="events-toolbar-info">
               <p className="events-result-count">
-                <strong>{filteredEvents.length}</strong>{" "}
-                {filteredEvents.length === 1 ? "event" : "events"}
+                <strong>
+                  {filteredEvents.length}
+                </strong>{" "}
+                {filteredEvents.length === 1
+                  ? "event"
+                  : "events"}
               </p>
 
-              {(searchTerm || selectedCategory !== "All") && (
+              {(searchTerm ||
+                selectedCategory !== "All") && (
                 <button
                   type="button"
                   className="events-clear-filters"
@@ -172,59 +342,74 @@ function Events() {
             </div>
           </div>
 
-          {/* Active filters */}
-          {(searchTerm || selectedCategory !== "All") && (
+          {(searchTerm ||
+            selectedCategory !== "All") && (
             <div className="events-active-filters">
               <span>Showing results for:</span>
 
               {searchTerm && (
-                <span className="events-filter-tag">"{searchTerm}"</span>
+                <span className="events-filter-tag">
+                  "{searchTerm}"
+                </span>
               )}
 
               {selectedCategory !== "All" && (
-                <span className="events-filter-tag">{selectedCategory}</span>
+                <span className="events-filter-tag">
+                  {selectedCategory}
+                </span>
               )}
             </div>
           )}
 
-          {/* Event results */}
+          {/* EVENT RESULTS */}
+
           {filteredEvents.length > 0 ? (
             <div className="events-grid">
               {filteredEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard
+                  key={event.id}
+                  event={event}
+                />
               ))}
             </div>
           ) : (
             <div className="events-empty-state">
-              <div className="events-empty-icon" aria-hidden="true">
-                🔎
-              </div>
-
-              <p className="events-empty-eyebrow">NO RESULTS</p>
+              <p className="events-empty-eyebrow">
+                NO RESULTS
+              </p>
 
               <h2>No events found</h2>
 
               <p>
-                We couldn't find any events matching your current search or
-                category. Try changing your filters.
+                We couldn't find any published events
+                matching your current search or category.
               </p>
 
-              <button
-                type="button"
-                className="events-empty-button"
-                onClick={clearFilters}
-              >
-                Clear filters
-              </button>
+              {(searchTerm ||
+                selectedCategory !== "All") && (
+                <button
+                  type="button"
+                  className="events-empty-button"
+                  onClick={clearFilters}
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
 
-          {/* Browse all */}
+          {/* BOTTOM CTA */}
+
           {filteredEvents.length > 0 && (
             <div className="events-bottom-cta">
-              <p>Looking for something specific?</p>
+              <p>
+                Looking for something specific?
+              </p>
 
-              <Link to="/" className="events-home-link">
+              <Link
+                to="/"
+                className="events-home-link"
+              >
                 Back to home →
               </Link>
             </div>

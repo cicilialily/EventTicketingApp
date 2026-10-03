@@ -113,3 +113,6 @@ export async function deleteEvent(id) {
     method: "DELETE",
   });
 }
+export async function getEventCategories() {
+  return apiRequest("/events/categories");
+}

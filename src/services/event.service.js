@@ -2,32 +2,46 @@ import prisma from "../config/database.js";
 
 const eventListInclude = {
   category: true,
+
   organizer: {
     select: {
       id: true,
       name: true,
     },
   },
+
   images: {
     orderBy: {
       createdAt: "asc",
+    },
+  },
+
+  // IMPORTANT:
+  // Include ticket types in the public event list so
+  // the frontend can calculate and display the ticket price.
+  ticketTypes: {
+    orderBy: {
+      price: "asc",
     },
   },
 };
 
 const eventDetailInclude = {
   category: true,
+
   organizer: {
     select: {
       id: true,
       name: true,
     },
   },
+
   images: {
     orderBy: {
       createdAt: "asc",
     },
   },
+
   ticketTypes: {
     orderBy: {
       price: "asc",
@@ -86,7 +100,9 @@ export async function getPublishedEvents({ search, categoryId } = {}) {
 
   return prisma.event.findMany({
     where,
+
     include: eventListInclude,
+
     orderBy: {
       startDate: "asc",
     },
@@ -102,6 +118,7 @@ export async function getPublishedEventById(id) {
       id,
       status: "PUBLISHED",
     },
+
     include: eventDetailInclude,
   });
 
@@ -126,7 +143,9 @@ export async function getManagedEvents(userId, role) {
 
   return prisma.event.findMany({
     where,
+
     include: eventDetailInclude,
+
     orderBy: {
       startDate: "asc",
     },
@@ -187,10 +206,15 @@ export async function createEvent(organizerId, eventData) {
           ? {
               create: ticketTypes.map((ticketType) => ({
                 name: ticketType.name,
+
                 description: ticketType.description ?? null,
+
                 price: ticketType.price.toString(),
+
                 quantity: ticketType.quantity,
+
                 saleStart: ticketType.saleStart ?? null,
+
                 saleEnd: ticketType.saleEnd ?? null,
               })),
             }
@@ -239,6 +263,7 @@ export async function updateEvent(id, userId, role, eventData) {
     where: {
       id,
     },
+
     include: {
       ticketTypes: true,
     },
@@ -308,6 +333,7 @@ export async function updateEvent(id, userId, role, eventData) {
       where: {
         id,
       },
+
       data,
     });
 
@@ -326,8 +352,7 @@ export async function updateEvent(id, userId, role, eventData) {
        * Delete existing ticket types that are no
        * longer present in the form.
        *
-       * We only allow deletion when nothing has
-       * been sold from that ticket type.
+       * Only delete ticket types with no sales.
        */
       for (const existingTicketType of existingEvent.ticketTypes) {
         if (
@@ -364,7 +389,7 @@ export async function updateEvent(id, userId, role, eventData) {
 
           /**
            * Do not allow the organizer to reduce
-           * total quantity below tickets already sold.
+           * the quantity below tickets already sold.
            */
           if (ticketType.quantity < existingTicketType.quantitySold) {
             throw createServiceError(
@@ -393,9 +418,10 @@ export async function updateEvent(id, userId, role, eventData) {
             },
           });
         } else {
-          /**
-           * NEW TICKET TYPE
-           */
+
+        /**
+         * NEW TICKET TYPE
+         */
           await tx.ticketType.create({
             data: {
               eventId: id,
@@ -424,6 +450,7 @@ export async function updateEvent(id, userId, role, eventData) {
       where: {
         id,
       },
+
       include: eventDetailInclude,
     });
   });

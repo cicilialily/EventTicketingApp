@@ -1,43 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import EventCard from "../../components/events/EventCard";
-import { mockEvents } from "../../data/mockEvents";
+import { getEvents } from "../../services/eventService";
 
 import "./Home.css";
-
-const featuredEvents = [
-  {
-    id: 1,
-    title: "Tech Conference 2026",
-    date: "October 10, 2026",
-    location: "Lagos, Nigeria",
-    category: "Conference",
-    price: 15000,
-    image:
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=85",
-  },
-  {
-    id: 2,
-    title: "Live Music Festival",
-    date: "October 18, 2026",
-    location: "Abuja, Nigeria",
-    category: "Music",
-    price: 10000,
-    image:
-      "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=85",
-  },
-  {
-    id: 3,
-    title: "Business & Startup Summit",
-    date: "November 2, 2026",
-    location: "Lagos, Nigeria",
-    category: "Business",
-    price: 20000,
-    image:
-      "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=85",
-  },
-];
 
 const categories = ["Music", "Conferences", "Sports", "Comedy", "Parties"];
 
@@ -45,13 +12,52 @@ function Home() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [events, setEvents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEvents() {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const data = await getEvents();
+
+        if (isMounted) {
+          setEvents(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error("Unable to load homepage events:", error);
+
+        if (isMounted) {
+          setErrorMessage(
+            error.message ||
+              "We couldn't load events right now. Please try again.",
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const featuredEvents = events.slice(0, 3);
 
   const handleSearch = (event) => {
     event.preventDefault();
 
     const query = searchTerm.trim();
-
-    const featuredEvents = mockEvents.slice(0, 3);
 
     if (!query) {
       navigate("/events");
@@ -64,6 +70,8 @@ function Home() {
   const handleCategoryClick = (category) => {
     navigate(`/events?category=${encodeURIComponent(category)}`);
   };
+
+  const heroEvent = featuredEvents[0];
 
   return (
     <div className="home-page">
@@ -103,29 +111,38 @@ function Home() {
           </div>
 
           <div className="home-hero-visual">
-            <div className="hero-feature-card">
-              <img
-                src={featuredEvents[0].image}
-                alt={featuredEvents[0].title}
-              />
+            {heroEvent ? (
+              <div className="hero-feature-card">
+                <img src={heroEvent.image} alt={heroEvent.title} />
 
-              <div className="hero-feature-overlay">
-                <span>Featured experience</span>
+                <div className="hero-feature-overlay">
+                  <span>Featured experience</span>
 
-                <strong>{featuredEvents[0].title}</strong>
+                  <strong>{heroEvent.title}</strong>
 
-                <p>
-                  {featuredEvents[0].date} · {featuredEvents[0].location}
-                </p>
+                  <p>
+                    {heroEvent.date} · {heroEvent.location}
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="hero-feature-card hero-feature-empty">
+                <div className="hero-feature-overlay">
+                  <span>EVENTTICKETING</span>
+
+                  <strong>Your next experience starts here.</strong>
+
+                  <p>Explore upcoming events and book your tickets.</p>
+                </div>
+              </div>
+            )}
 
             <div className="hero-floating-card">
               <span className="hero-floating-label">THIS WEEK</span>
 
-              <strong>Hundreds of experiences</strong>
+              <strong>Discover upcoming experiences</strong>
 
-              <span>Discover something new</span>
+              <span>Find something new to do</span>
             </div>
           </div>
         </div>
@@ -136,6 +153,7 @@ function Home() {
           <div className="home-section-heading home-category-heading">
             <div>
               <p className="home-section-eyebrow">EXPLORE</p>
+
               <h2>Find something for every occasion.</h2>
             </div>
 
@@ -178,11 +196,37 @@ function Home() {
             </Link>
           </div>
 
-          <div className="home-events-grid">
-            {featuredEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="home-events-state">
+              <p>Loading upcoming events...</p>
+            </div>
+          ) : errorMessage ? (
+            <div className="home-events-state">
+              <p>{errorMessage}</p>
+              <Link to="/events" className="home-text-link">
+                View events
+              </Link>
+            </div>
+          ) : featuredEvents.length > 0 ? (
+            <div className="home-events-grid">
+              {featuredEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <div className="home-events-state">
+              <h3>No published events yet.</h3>
+
+              <p>
+                Organizers can publish an event and it will appear here
+                automatically.
+              </p>
+
+              <Link to="/events" className="home-text-link">
+                Explore events →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
