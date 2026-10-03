@@ -8,6 +8,10 @@ function Navbar() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
+  const userRole = user?.role?.toUpperCase();
+
+  const isOrganizerOrAdmin = ["ORGANIZER", "ADMIN"].includes(userRole);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -38,18 +42,27 @@ function Navbar() {
             Events
           </NavLink>
 
-          {isAuthenticated && (
+          {isAuthenticated && !isOrganizerOrAdmin && (
             <NavLink to="/tickets" className={getNavLinkClass}>
               My Tickets
             </NavLink>
           )}
 
-          {isAuthenticated &&
-            ["ORGANIZER", "ADMIN"].includes(user?.role?.toUpperCase()) && (
+          {isAuthenticated && isOrganizerOrAdmin && (
+            <>
+              <NavLink to="/organizer/dashboard" className={getNavLinkClass}>
+                Dashboard
+              </NavLink>
+
+              <NavLink to="/organizer/events" className={getNavLinkClass}>
+                My Events
+              </NavLink>
+
               <NavLink to="/organizer/check-in" className={getNavLinkClass}>
                 Check-In
               </NavLink>
-            )}
+            </>
+          )}
         </nav>
 
         {/* Account section */}

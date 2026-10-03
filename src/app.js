@@ -8,6 +8,7 @@ import orderRoutes from "./routes/orders.js";
 import swaggerSpec from "./config/swagger.js";
 import eventsRoutes from "./routes/events.js";
 import ticketsRoutes from "./routes/tickets.js";
+import analyticsRoutes from "./routes/analytics.js";
 
 const app = express();
 
@@ -38,5 +39,5 @@ app.use("/api/users", userRoutes);
 app.use("/api/events", eventsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/tickets", ticketsRoutes);
-
+app.use("/api/analytics", analyticsRoutes);
 export default app;

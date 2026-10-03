@@ -46,19 +46,16 @@ function Login() {
 
       const userRole = loggedInUser?.role?.toUpperCase();
 
-      const isOrganizerOrAdmin = ["ORGANIZER", "ADMIN"].includes(
-        userRole,
-      );
+      const isOrganizerOrAdmin = ["ORGANIZER", "ADMIN"].includes(userRole);
 
-      const isOrganizerRoute =
-        from && from.startsWith("/organizer/");
+      const isOrganizerRoute = from && from.startsWith("/organizer/");
 
       let destination = "/";
 
       if (from && (!isOrganizerRoute || isOrganizerOrAdmin)) {
         destination = from;
       } else if (isOrganizerOrAdmin) {
-        destination = "/organizer/events";
+        destination = "/organizer/dashboard";
       }
 
       navigate(destination, {
@@ -88,8 +85,8 @@ function Login() {
             </h1>
 
             <p>
-              Discover exciting events, book your tickets, and keep
-              everything you need in one place.
+              Discover exciting events, book your tickets, and keep everything
+              you need in one place.
             </p>
           </div>
 
@@ -107,9 +104,7 @@ function Login() {
 
               <h2>Sign in</h2>
 
-              <p>
-                Enter your account details to continue.
-              </p>
+              <p>Enter your account details to continue.</p>
             </div>
 
             {successMessage && (
@@ -119,22 +114,14 @@ function Login() {
             )}
 
             {error && (
-              <div
-                className="auth-alert auth-alert-error"
-                role="alert"
-              >
+              <div className="auth-alert auth-alert-error" role="alert">
                 {error}
               </div>
             )}
 
-            <form
-              className="auth-form"
-              onSubmit={handleSubmit}
-            >
+            <form className="auth-form" onSubmit={handleSubmit}>
               <div className="auth-field">
-                <label htmlFor="email">
-                  Email address
-                </label>
+                <label htmlFor="email">Email address</label>
 
                 <input
                   id="email"
@@ -149,14 +136,9 @@ function Login() {
 
               <div className="auth-field">
                 <div className="auth-field-heading">
-                  <label htmlFor="password">
-                    Password
-                  </label>
+                  <label htmlFor="password">Password</label>
 
-                  <Link
-                    to="/forgot-password"
-                    className="auth-forgot-link"
-                  >
+                  <Link to="/forgot-password" className="auth-forgot-link">
                     Forgot password?
                   </Link>
                 </div>
@@ -177,17 +159,12 @@ function Login() {
                 className="auth-submit"
                 disabled={isSubmitting}
               >
-                {isSubmitting
-                  ? "Signing in..."
-                  : "Sign in"}
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
 
             <p className="auth-switch">
-              Don't have an account?{" "}
-              <Link to="/register">
-                Create one
-              </Link>
+              Don't have an account? <Link to="/register">Create one</Link>
             </p>
           </div>
         </section>

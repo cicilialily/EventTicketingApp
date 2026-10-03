@@ -19,6 +19,8 @@ import OrganizerEvents from "../pages/organizer/Events";
 import CreateEvent from "../pages/organizer/CreateEvent";
 import EditEvent from "../pages/organizer/EditEvent";
 
+import Dashboard from "../pages/organizer/Dashboard";
+
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
@@ -55,6 +57,7 @@ function AppRoutes() {
 
           <Route path="/organizer/events/:id/edit" element={<EditEvent />} />
         </Route>
+        <Route path="/organizer/dashboard" element={<Dashboard />} />
       </Route>
     </Routes>
   );
