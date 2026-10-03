@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
+
 import { useNavigate, useParams } from "react-router-dom";
+
 import {
   ArrowLeft,
   CalendarDays,
   LoaderCircle,
   MapPin,
+  Plus,
   Save,
+  Ticket,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -34,6 +39,19 @@ function formatDateTimeLocal(value) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+function createEmptyTicketType() {
+  return {
+    id: "",
+    name: "",
+    description: "",
+    price: "",
+    quantity: "",
+    quantitySold: 0,
+    saleStart: "",
+    saleEnd: "",
+  };
+}
+
 function EditEvent() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,6 +72,7 @@ function EditEvent() {
     startDate: "",
     endDate: "",
     status: "DRAFT",
+    ticketTypes: [],
   });
 
   useEffect(() => {
@@ -77,6 +96,26 @@ function EditEvent() {
 
         setCategories(Array.isArray(categoryData) ? categoryData : []);
 
+        const existingTicketTypes = Array.isArray(event.ticketTypes)
+          ? event.ticketTypes.map((ticketType) => ({
+              id: ticketType.id || "",
+              name: ticketType.name || "",
+              description: ticketType.description || "",
+              price:
+                ticketType.price !== undefined && ticketType.price !== null
+                  ? String(ticketType.price)
+                  : "",
+              quantity:
+                ticketType.quantity !== undefined &&
+                ticketType.quantity !== null
+                  ? String(ticketType.quantity)
+                  : "",
+              quantitySold: Number(ticketType.quantitySold || 0),
+              saleStart: formatDateTimeLocal(ticketType.saleStart),
+              saleEnd: formatDateTimeLocal(ticketType.saleEnd),
+            }))
+          : [];
+
         setFormData({
           title: event.title || "",
           description: event.description || "",
@@ -86,6 +125,7 @@ function EditEvent() {
           startDate: formatDateTimeLocal(event.startDate),
           endDate: formatDateTimeLocal(event.endDate),
           status: event.status || "DRAFT",
+          ticketTypes: existingTicketTypes,
         });
       } catch (error) {
         console.error("Failed to load event:", error);
@@ -107,6 +147,56 @@ function EditEvent() {
     setFormData((current) => ({
       ...current,
       [name]: value,
+    }));
+
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  function handleTicketChange(index, field, value) {
+    setFormData((current) => {
+      const updatedTicketTypes = [...current.ticketTypes];
+
+      updatedTicketTypes[index] = {
+        ...updatedTicketTypes[index],
+        [field]: value,
+      };
+
+      return {
+        ...current,
+        ticketTypes: updatedTicketTypes,
+      };
+    });
+
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  function addTicketType() {
+    setFormData((current) => ({
+      ...current,
+      ticketTypes: [...current.ticketTypes, createEmptyTicketType()],
+    }));
+
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  function removeTicketType(index) {
+    const ticketType = formData.ticketTypes[index];
+
+    if (ticketType?.quantitySold > 0) {
+      setErrorMessage(
+        `"${ticketType.name}" cannot be removed because tickets have already been sold.`,
+      );
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      ticketTypes: current.ticketTypes.filter(
+        (_, ticketIndex) => ticketIndex !== index,
+      ),
     }));
 
     setErrorMessage("");
@@ -149,6 +239,43 @@ function EditEvent() {
       return "Event end date and time must be after the start date and time.";
     }
 
+    for (let index = 0; index < formData.ticketTypes.length; index += 1) {
+      const ticketType = formData.ticketTypes[index];
+
+      if (!ticketType.name.trim()) {
+        return `Please enter a name for ticket type ${index + 1}.`;
+      }
+
+      const price = Number(ticketType.price);
+
+      if (ticketType.price === "" || !Number.isFinite(price) || price < 0) {
+        return `Please enter a valid price for "${ticketType.name}".`;
+      }
+
+      const quantity = Number(ticketType.quantity);
+
+      if (
+        ticketType.quantity === "" ||
+        !Number.isInteger(quantity) ||
+        quantity <= 0
+      ) {
+        return `Please enter a valid quantity for "${ticketType.name}".`;
+      }
+
+      if (quantity < Number(ticketType.quantitySold || 0)) {
+        return `Quantity for "${ticketType.name}" cannot be less than the number of tickets already sold (${ticketType.quantitySold}).`;
+      }
+
+      if (ticketType.saleStart && ticketType.saleEnd) {
+        const saleStart = new Date(ticketType.saleStart);
+        const saleEnd = new Date(ticketType.saleEnd);
+
+        if (saleEnd <= saleStart) {
+          return `Ticket sale end must be after sale start for "${ticketType.name}".`;
+        }
+      }
+    }
+
     return "";
   }
 
@@ -174,6 +301,27 @@ function EditEvent() {
     setIsSubmitting(true);
 
     try {
+      const ticketTypes = formData.ticketTypes.map((ticketType) => {
+        const payload = {
+          name: ticketType.name.trim(),
+          description: ticketType.description.trim() || null,
+          price: Number(ticketType.price),
+          quantity: Number(ticketType.quantity),
+          saleStart: ticketType.saleStart
+            ? new Date(ticketType.saleStart).toISOString()
+            : null,
+          saleEnd: ticketType.saleEnd
+            ? new Date(ticketType.saleEnd).toISOString()
+            : null,
+        };
+
+        if (ticketType.id) {
+          payload.id = ticketType.id;
+        }
+
+        return payload;
+      });
+
       await updateManagedEvent(id, {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -183,6 +331,7 @@ function EditEvent() {
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
         status: formData.status,
+        ticketTypes,
       });
 
       setSuccessMessage("Event updated successfully.");
@@ -196,6 +345,11 @@ function EditEvent() {
       setErrorMessage(
         error.message || "Unable to update this event. Please try again.",
       );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -220,6 +374,7 @@ function EditEvent() {
       <main className="edit-event-page">
         <div className="edit-event-state">
           <h2>Unable to load event</h2>
+
           <p>{errorMessage}</p>
 
           <button
@@ -252,7 +407,9 @@ function EditEvent() {
 
           <h1>Edit Event</h1>
 
-          <p>Update the details and status of your event.</p>
+          <p>
+            Update your event details, ticket types, pricing, and sales period.
+          </p>
         </header>
 
         {errorMessage && (
@@ -271,6 +428,8 @@ function EditEvent() {
         )}
 
         <form className="edit-event-form" onSubmit={handleSubmit}>
+          {/* EVENT INFORMATION */}
+
           <section className="edit-event-section">
             <div className="edit-event-section-heading">
               <div className="edit-event-section-icon">
@@ -279,6 +438,7 @@ function EditEvent() {
 
               <div>
                 <h2>Event Information</h2>
+
                 <p>Update the main information attendees see.</p>
               </div>
             </div>
@@ -345,6 +505,8 @@ function EditEvent() {
             </div>
           </section>
 
+          {/* LOCATION & SCHEDULE */}
+
           <section className="edit-event-section">
             <div className="edit-event-section-heading">
               <div className="edit-event-section-icon">
@@ -353,6 +515,7 @@ function EditEvent() {
 
               <div>
                 <h2>Location & Schedule</h2>
+
                 <p>Update the event venue, address, and schedule.</p>
               </div>
             </div>
@@ -408,14 +571,216 @@ function EditEvent() {
             </div>
           </section>
 
-          <section className="edit-event-note">
-            <strong>Note</strong>
+          {/* TICKET TYPES */}
 
-            <p>
-              Ticket types and event images are not changed from this form. Your
-              current backend manages those records separately.
-            </p>
+          <section className="edit-event-section">
+            <div className="edit-event-section-heading">
+              <div className="edit-event-section-icon">
+                <Ticket size={20} />
+              </div>
+
+              <div>
+                <h2>Ticket Types</h2>
+
+                <p>Manage ticket prices, quantities, and sales periods.</p>
+              </div>
+            </div>
+
+            <div className="edit-event-ticket-list">
+              {formData.ticketTypes.length === 0 && (
+                <div className="edit-event-ticket-empty">
+                  <p>No ticket types have been added to this event.</p>
+
+                  <button
+                    type="button"
+                    className="edit-event-add-ticket-button"
+                    onClick={addTicketType}
+                  >
+                    <Plus size={18} />
+                    Add Ticket Type
+                  </button>
+                </div>
+              )}
+
+              {formData.ticketTypes.map((ticketType, index) => (
+                <div
+                  className="edit-event-ticket-card"
+                  key={ticketType.id || `new-ticket-${index}`}
+                >
+                  <div className="edit-event-ticket-header">
+                    <div>
+                      <h3>{ticketType.name || `Ticket Type ${index + 1}`}</h3>
+
+                      {ticketType.quantitySold > 0 && (
+                        <p>
+                          {ticketType.quantitySold} ticket
+                          {ticketType.quantitySold === 1 ? "" : "s"} already
+                          sold
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="edit-event-remove-ticket-button"
+                      onClick={() => removeTicketType(index)}
+                      disabled={isSubmitting || ticketType.quantitySold > 0}
+                      title={
+                        ticketType.quantitySold > 0
+                          ? "Cannot remove a ticket type with tickets already sold"
+                          : "Remove ticket type"
+                      }
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+
+                  <div className="edit-event-fields">
+                    <div className="edit-event-field">
+                      <label htmlFor={`ticket-name-${index}`}>
+                        Ticket name
+                      </label>
+
+                      <input
+                        id={`ticket-name-${index}`}
+                        type="text"
+                        value={ticketType.name}
+                        onChange={(event) =>
+                          handleTicketChange(index, "name", event.target.value)
+                        }
+                        placeholder="e.g. Regular"
+                      />
+                    </div>
+
+                    <div className="edit-event-field">
+                      <label htmlFor={`ticket-price-${index}`}>Price (₦)</label>
+
+                      <input
+                        id={`ticket-price-${index}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={ticketType.price}
+                        onChange={(event) =>
+                          handleTicketChange(index, "price", event.target.value)
+                        }
+                        placeholder="3500"
+                      />
+                    </div>
+
+                    <div className="edit-event-field">
+                      <label htmlFor={`ticket-quantity-${index}`}>
+                        Total quantity
+                      </label>
+
+                      <input
+                        id={`ticket-quantity-${index}`}
+                        type="number"
+                        min={Math.max(1, Number(ticketType.quantitySold || 0))}
+                        step="1"
+                        value={ticketType.quantity}
+                        onChange={(event) =>
+                          handleTicketChange(
+                            index,
+                            "quantity",
+                            event.target.value,
+                          )
+                        }
+                      />
+
+                      {ticketType.quantitySold > 0 && (
+                        <small>
+                          At least {ticketType.quantitySold} must remain because
+                          those tickets have already been sold.
+                        </small>
+                      )}
+                    </div>
+
+                    <div className="edit-event-field full-width">
+                      <label htmlFor={`ticket-description-${index}`}>
+                        Ticket description
+                      </label>
+
+                      <textarea
+                        id={`ticket-description-${index}`}
+                        rows={3}
+                        value={ticketType.description}
+                        onChange={(event) =>
+                          handleTicketChange(
+                            index,
+                            "description",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Describe what this ticket includes..."
+                      />
+                    </div>
+
+                    <div className="edit-event-field">
+                      <label htmlFor={`ticket-sale-start-${index}`}>
+                        Sales start
+                      </label>
+
+                      <input
+                        id={`ticket-sale-start-${index}`}
+                        type="datetime-local"
+                        value={ticketType.saleStart}
+                        onChange={(event) =>
+                          handleTicketChange(
+                            index,
+                            "saleStart",
+                            event.target.value,
+                          )
+                        }
+                      />
+
+                      <small>
+                        Leave empty to make tickets available immediately.
+                      </small>
+                    </div>
+
+                    <div className="edit-event-field">
+                      <label htmlFor={`ticket-sale-end-${index}`}>
+                        Sales end
+                      </label>
+
+                      <input
+                        id={`ticket-sale-end-${index}`}
+                        type="datetime-local"
+                        value={ticketType.saleEnd}
+                        onChange={(event) =>
+                          handleTicketChange(
+                            index,
+                            "saleEnd",
+                            event.target.value,
+                          )
+                        }
+                      />
+
+                      <small>
+                        Leave empty to keep sales open until the event system
+                        closes them.
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {formData.ticketTypes.length > 0 && (
+                <button
+                  type="button"
+                  className="edit-event-add-ticket-button"
+                  onClick={addTicketType}
+                  disabled={isSubmitting}
+                >
+                  <Plus size={18} />
+                  Add Another Ticket Type
+                </button>
+              )}
+            </div>
           </section>
+
+          {/* ACTIONS */}
 
           <section className="edit-event-actions-section">
             <button

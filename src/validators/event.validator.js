@@ -31,6 +31,15 @@ const ticketTypeSchema = z.object({
   saleEnd: z.coerce.date().optional().nullable(),
 });
 
+/**
+ * Used when updating an event.
+ * Existing ticket types need their ID so the backend
+ * knows whether to update or create a ticket type.
+ */
+const updateTicketTypeSchema = ticketTypeSchema.extend({
+  id: z.string().uuid("Ticket type ID must be a valid UUID").optional(),
+});
+
 export const createEventSchema = z
   .object({
     title: z
@@ -69,6 +78,7 @@ export const createEventSchema = z
     ticketTypes: z.array(ticketTypeSchema).optional().default([]),
   })
   .superRefine((data, ctx) => {
+    // Event date validation
     if (data.endDate <= data.startDate) {
       ctx.addIssue({
         code: "custom",
@@ -77,6 +87,7 @@ export const createEventSchema = z
       });
     }
 
+    // Only one primary image is allowed
     const primaryImages = data.images.filter(
       (image) => image.isPrimary === true,
     );
@@ -89,6 +100,7 @@ export const createEventSchema = z
       });
     }
 
+    // Ticket sales date validation
     for (let index = 0; index < data.ticketTypes.length; index += 1) {
       const ticketType = data.ticketTypes[index];
 
@@ -145,9 +157,13 @@ export const updateEventSchema = z
 
     images: z.array(imageSchema).optional(),
 
-    ticketTypes: z.array(ticketTypeSchema).optional(),
+    // IMPORTANT:
+    // Update ticket types use updateTicketTypeSchema
+    // so existing ticket IDs are preserved.
+    ticketTypes: z.array(updateTicketTypeSchema).optional(),
   })
   .superRefine((data, ctx) => {
+    // Event date validation
     if (data.startDate && data.endDate && data.endDate <= data.startDate) {
       ctx.addIssue({
         code: "custom",
@@ -156,6 +172,7 @@ export const updateEventSchema = z
       });
     }
 
+    // Image validation
     if (data.images) {
       const primaryImages = data.images.filter(
         (image) => image.isPrimary === true,
@@ -170,6 +187,7 @@ export const updateEventSchema = z
       }
     }
 
+    // Ticket validation
     if (data.ticketTypes) {
       for (let index = 0; index < data.ticketTypes.length; index += 1) {
         const ticketType = data.ticketTypes[index];

@@ -42,7 +42,7 @@ function createServiceError(message, statusCode) {
 }
 
 /**
- * Get all publicly visible events.
+ * Get all published events.
  */
 export async function getPublishedEvents({ search, categoryId } = {}) {
   const where = {
@@ -94,7 +94,7 @@ export async function getPublishedEvents({ search, categoryId } = {}) {
 }
 
 /**
- * Get one publicly visible event.
+ * Get one published event by ID.
  */
 export async function getPublishedEventById(id) {
   const event = await prisma.event.findFirst({
@@ -113,10 +113,8 @@ export async function getPublishedEventById(id) {
 }
 
 /**
- * Get events managed by the authenticated organizer/admin.
- *
- * Organizers see only their own events.
- * Admins see all events.
+ * Get events managed by the current organizer.
+ * ADMIN can see all events.
  */
 export async function getManagedEvents(userId, role) {
   const where =
@@ -136,7 +134,7 @@ export async function getManagedEvents(userId, role) {
 }
 
 /**
- * Create an event for the authenticated organizer.
+ * Create an event.
  */
 export async function createEvent(organizerId, eventData) {
   const category = await prisma.eventCategory.findUnique({
@@ -204,7 +202,8 @@ export async function createEvent(organizerId, eventData) {
 }
 
 /**
- * Check whether a user owns an event.
+ * Find an event and confirm that the user is allowed
+ * to manage it.
  */
 async function findEventForManagement(id, userId, role) {
   const event = await prisma.event.findUnique({
@@ -228,15 +227,45 @@ async function findEventForManagement(id, userId, role) {
 }
 
 /**
- * Update an event.
+ * Update an event and its ticket types.
  *
- * Ticket types and images are intentionally not replaced here.
- * They have their own database relations and ticket/order records,
- * so changing them will be handled separately in the ticket module.
+ * Existing ticket types are identified by their ID.
+ * New ticket types have no ID.
  */
 export async function updateEvent(id, userId, role, eventData) {
   await findEventForManagement(id, userId, role);
 
+  const existingEvent = await prisma.event.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      ticketTypes: true,
+    },
+  });
+
+  if (!existingEvent) {
+    throw createServiceError("Event not found", 404);
+  }
+
+  /**
+   * Validate category before starting the transaction.
+   */
+  if (eventData.categoryId !== undefined) {
+    const category = await prisma.eventCategory.findUnique({
+      where: {
+        id: eventData.categoryId,
+      },
+    });
+
+    if (!category) {
+      throw createServiceError("Event category not found", 404);
+    }
+  }
+
+  /**
+   * Build the basic event update.
+   */
   const data = {};
 
   if (eventData.title !== undefined) {
@@ -248,16 +277,6 @@ export async function updateEvent(id, userId, role, eventData) {
   }
 
   if (eventData.categoryId !== undefined) {
-    const category = await prisma.eventCategory.findUnique({
-      where: {
-        id: eventData.categoryId,
-      },
-    });
-
-    if (!category) {
-      throw createServiceError("Event category not found", 404);
-    }
-
     data.categoryId = eventData.categoryId;
   }
 
@@ -281,17 +300,137 @@ export async function updateEvent(id, userId, role, eventData) {
     data.status = eventData.status;
   }
 
-  return prisma.event.update({
-    where: {
-      id,
-    },
-    data,
-    include: eventDetailInclude,
+  return prisma.$transaction(async (tx) => {
+    /**
+     * Update basic event information.
+     */
+    await tx.event.update({
+      where: {
+        id,
+      },
+      data,
+    });
+
+    /**
+     * Only modify ticket types when the frontend
+     * actually sends ticketTypes.
+     */
+    if (Array.isArray(eventData.ticketTypes)) {
+      const incomingTicketIds = eventData.ticketTypes
+        .filter((ticketType) => ticketType.id)
+        .map((ticketType) => ticketType.id);
+
+      const incomingIds = new Set(incomingTicketIds);
+
+      /**
+       * Delete existing ticket types that are no
+       * longer present in the form.
+       *
+       * We only allow deletion when nothing has
+       * been sold from that ticket type.
+       */
+      for (const existingTicketType of existingEvent.ticketTypes) {
+        if (
+          !incomingIds.has(existingTicketType.id) &&
+          existingTicketType.quantitySold === 0
+        ) {
+          await tx.ticketType.delete({
+            where: {
+              id: existingTicketType.id,
+            },
+          });
+        }
+      }
+
+      /**
+       * Update existing ticket types or create
+       * new ones.
+       */
+      for (const ticketType of eventData.ticketTypes) {
+        /**
+         * EXISTING TICKET TYPE
+         */
+        if (ticketType.id) {
+          const existingTicketType = existingEvent.ticketTypes.find(
+            (item) => item.id === ticketType.id,
+          );
+
+          if (!existingTicketType) {
+            throw createServiceError(
+              "One of the selected ticket types does not belong to this event",
+              400,
+            );
+          }
+
+          /**
+           * Do not allow the organizer to reduce
+           * total quantity below tickets already sold.
+           */
+          if (ticketType.quantity < existingTicketType.quantitySold) {
+            throw createServiceError(
+              `Quantity for "${existingTicketType.name}" cannot be less than tickets already sold.`,
+              400,
+            );
+          }
+
+          await tx.ticketType.update({
+            where: {
+              id: ticketType.id,
+            },
+
+            data: {
+              name: ticketType.name,
+
+              description: ticketType.description ?? null,
+
+              price: ticketType.price.toString(),
+
+              quantity: ticketType.quantity,
+
+              saleStart: ticketType.saleStart ?? null,
+
+              saleEnd: ticketType.saleEnd ?? null,
+            },
+          });
+        } else {
+          /**
+           * NEW TICKET TYPE
+           */
+          await tx.ticketType.create({
+            data: {
+              eventId: id,
+
+              name: ticketType.name,
+
+              description: ticketType.description ?? null,
+
+              price: ticketType.price.toString(),
+
+              quantity: ticketType.quantity,
+
+              saleStart: ticketType.saleStart ?? null,
+
+              saleEnd: ticketType.saleEnd ?? null,
+            },
+          });
+        }
+      }
+    }
+
+    /**
+     * Return the fully updated event.
+     */
+    return tx.event.findUnique({
+      where: {
+        id,
+      },
+      include: eventDetailInclude,
+    });
   });
 }
 
 /**
- * Cancel an event instead of deleting it permanently.
+ * Cancel an event.
  */
 export async function cancelEvent(id, userId, role) {
   await findEventForManagement(id, userId, role);
@@ -300,9 +439,11 @@ export async function cancelEvent(id, userId, role) {
     where: {
       id,
     },
+
     data: {
       status: "CANCELLED",
     },
+
     include: eventDetailInclude,
   });
 }
@@ -319,7 +460,7 @@ export async function getCategories() {
 }
 
 /**
- * Create an event category.
+ * Create a category.
  */
 export async function createCategory(name) {
   const existingCategory = await prisma.eventCategory.findUnique({
