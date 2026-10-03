@@ -18,7 +18,6 @@ import CheckIn from "../pages/organizer/CheckIn";
 import OrganizerEvents from "../pages/organizer/Events";
 import CreateEvent from "../pages/organizer/CreateEvent";
 import EditEvent from "../pages/organizer/EditEvent";
-
 import Dashboard from "../pages/organizer/Dashboard";
 
 import ProtectedRoute from "./ProtectedRoute";
@@ -27,37 +26,55 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
-        {/* Public */}
+        {/* =========================
+            PUBLIC ROUTES
+        ========================= */}
+
         <Route path="/" element={<Home />} />
+
         <Route path="/events" element={<Events />} />
+
         <Route path="/events/:id" element={<EventDetails />} />
 
-        {/* Authentication */}
+        {/* =========================
+            AUTHENTICATION ROUTES
+        ========================= */}
+
         <Route path="/login" element={<Login />} />
+
         <Route path="/register" element={<Register />} />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
+
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Protected attendee routes */}
+        {/* =========================
+            PROTECTED ATTENDEE ROUTES
+        ========================= */}
+
         <Route element={<ProtectedRoute />}>
           <Route path="/tickets" element={<Tickets />} />
 
           <Route path="/profile" element={<Profile />} />
         </Route>
 
-        {/* Protected organizer/admin routes */}
+        {/* =========================
+            PROTECTED ORGANIZER / ADMIN ROUTES
+        ========================= */}
+
         <Route
           element={<ProtectedRoute allowedRoles={["ORGANIZER", "ADMIN"]} />}
         >
+          <Route path="/organizer/dashboard" element={<Dashboard />} />
+
           <Route path="/organizer/events" element={<OrganizerEvents />} />
 
           <Route path="/organizer/events/new" element={<CreateEvent />} />
 
-          <Route path="/organizer/check-in" element={<CheckIn />} />
-
           <Route path="/organizer/events/:id/edit" element={<EditEvent />} />
+
+          <Route path="/organizer/check-in" element={<CheckIn />} />
         </Route>
-        <Route path="/organizer/dashboard" element={<Dashboard />} />
       </Route>
     </Routes>
   );
