@@ -60,3 +60,8 @@ Swagger UI:
 
 ```text
 http://localhost:5000/api/docs
+
+
+
+
+```

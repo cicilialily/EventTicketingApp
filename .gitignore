@@ -32,3 +32,5 @@ Thumbs.db
 .cursor/
 .windsurf/
 >>>>>>> 09c80a4 (Remove unnecessary AI tool files)
+
+eventticketing_backup.sql
